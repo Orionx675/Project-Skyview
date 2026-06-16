@@ -1,0 +1,108 @@
+/* ===========================================================================
+   app/globals.css — Project Zenith design system (Tailwind CSS v4)
+   ===========================================================================
+   Tailwind v4 is configured here, not in tailwind.config.js. The @theme block
+   defines design tokens which Tailwind turns into utilities automatically:
+   --color-zenith-cyan  ->  bg-zenith-cyan / text-zenith-cyan / border-…
+
+   Palette philosophy: "mission control at night". A near-black blue void,
+   ultra-light starlight text (WCAG AAA contrast on the void), and three
+   instrument accents — radar cyan, aurora violet, signal green.
+   ======================================================================== */
+
+@import "tailwindcss";
+
+@theme {
+  /* --- Surfaces (darkest -> lightest) --------------------------------- */
+  --color-void: #04060f;        /* page background: deep-space blue-black  */
+  --color-panel: #0a0f1f;       /* cards / sidebar                         */
+  --color-panel-raised: #111831;/* hover & raised surfaces                 */
+  --color-grid: #1c2747;        /* hairline borders, dividers              */
+
+  /* --- Text ------------------------------------------------------------ */
+  --color-starlight: #eef2ff;   /* primary text  (~16:1 on void)           */
+  --color-stardust: #97a3c4;    /* secondary text (~7:1 on void)           */
+  --color-faint: #5a6790;       /* tertiary / disabled                     */
+
+  /* --- Instrument accents ---------------------------------------------- */
+  --color-zenith-cyan: #2dd4ff; /* primary accent: radar / live data       */
+  --color-aurora: #a78bfa;      /* secondary accent: violet                */
+  --color-signal: #34d399;      /* positive / "above horizon"              */
+  --color-amber: #fbbf24;       /* caution / GPS layer                     */
+  --color-alert: #fb7185;       /* errors / below horizon                  */
+
+  /* --- Typography (wired to next/font variables in layout.tsx) --------- */
+  --font-display: var(--font-space-grotesk), system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+}
+
+/* --- Base ---------------------------------------------------------------- */
+html,
+body {
+  height: 100%;
+  background: var(--color-void);
+  color: var(--color-starlight);
+  font-family: var(--font-display);
+  /* Crisp numerals that don't jitter as telemetry updates every second. */
+  font-feature-settings: "tnum" 1;
+}
+
+/* Subtle starfield: two layered radial glows + noise-free dot grid keeps the
+   empty regions of the dashboard from feeling flat, at zero image cost. */
+body {
+  background-image:
+    radial-gradient(ellipse 80% 50% at 70% -10%, rgb(45 212 255 / 0.08), transparent),
+    radial-gradient(ellipse 60% 40% at 10% 110%, rgb(167 139 250 / 0.07), transparent);
+  background-attachment: fixed;
+}
+
+/* --- Custom utilities ------------------------------------------------------ */
+
+/* Soft cyan glow for live elements (the "this is real-time" affordance). */
+@utility glow-cyan {
+  box-shadow: 0 0 12px rgb(45 212 255 / 0.35), 0 0 2px rgb(45 212 255 / 0.6);
+}
+
+/* Pulsing dot used by the LIVE badge and active layer indicators. */
+@utility pulse-live {
+  animation: pulse-live 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+@keyframes pulse-live {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+/* Thin instrument-style scrollbar for the sidebar. */
+@utility scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-grid) transparent;
+}
+
+/* --- Intro + globe-stage dressing ----------------------------------------- */
+
+/* Twinkling star used by the boot overlay (positions set inline). */
+.intro-star {
+  position: absolute;
+  border-radius: 9999px;
+  background: var(--color-starlight);
+  animation: twinkle 2.6s ease-in-out infinite;
+}
+@keyframes twinkle {
+  0%, 100% { opacity: 0.12; }
+  50% { opacity: 0.85; }
+}
+
+/* Soft edge falloff over the 3D stage — pulls focus to the globe. */
+.globe-vignette {
+  background: radial-gradient(ellipse at center, transparent 52%, rgb(4 6 15 / 0.65) 100%);
+}
+
+/* --- Cesium chrome overrides ---------------------------------------------- */
+/* Hide Cesium's default credit bar lightly (credits stay in the DOM for
+   attribution compliance, rendered into our own footer container). */
+.cesium-viewer-bottom {
+  opacity: 0.45;
+}
+.cesium-viewer .cesium-widget-credits {
+  font-size: 10px;
+}

@@ -1,0 +1,17 @@
+[
+  { "id": "M31", "name": "Andromeda Galaxy", "type": "Galaxy", "con": "And", "ra": 10.685, "dec": 41.269, "mag": 3.4, "dist": 2500000 },
+  { "id": "M42", "name": "Orion Nebula", "type": "Nebula", "con": "Ori", "ra": 83.822, "dec": -5.391, "mag": 4.0, "dist": 1344 },
+  { "id": "M45", "name": "Pleiades", "type": "Open Cluster", "con": "Tau", "ra": 56.750, "dec": 24.117, "mag": 1.6, "dist": 444 },
+  { "id": "M44", "name": "Beehive Cluster", "type": "Open Cluster", "con": "Cnc", "ra": 130.100, "dec": 19.667, "mag": 3.7, "dist": 577 },
+  { "id": "M13", "name": "Hercules Cluster", "type": "Globular Cluster", "con": "Her", "ra": 250.423, "dec": 36.461, "mag": 5.8, "dist": 22200 },
+  { "id": "M51", "name": "Whirlpool Galaxy", "type": "Galaxy", "con": "CVn", "ra": 202.470, "dec": 47.195, "mag": 8.4, "dist": 23000000 },
+  { "id": "M81", "name": "Bode's Galaxy", "type": "Galaxy", "con": "UMa", "ra": 148.888, "dec": 69.065, "mag": 6.9, "dist": 11800000 },
+  { "id": "M104", "name": "Sombrero Galaxy", "type": "Galaxy", "con": "Vir", "ra": 189.998, "dec": -11.623, "mag": 8.0, "dist": 29300000 },
+  { "id": "M57", "name": "Ring Nebula", "type": "Planetary Nebula", "con": "Lyr", "ra": 283.396, "dec": 33.029, "mag": 8.8, "dist": 2300 },
+  { "id": "M27", "name": "Dumbbell Nebula", "type": "Planetary Nebula", "con": "Vul", "ra": 299.901, "dec": 22.721, "mag": 7.4, "dist": 1360 },
+  { "id": "M8", "name": "Lagoon Nebula", "type": "Nebula", "con": "Sgr", "ra": 270.900, "dec": -24.383, "mag": 6.0, "dist": 4100 },
+  { "id": "M7", "name": "Ptolemy Cluster", "type": "Open Cluster", "con": "Sco", "ra": 268.450, "dec": -34.793, "mag": 3.3, "dist": 980 },
+  { "id": "M16", "name": "Eagle Nebula", "type": "Nebula", "con": "Ser", "ra": 274.700, "dec": -13.783, "mag": 6.0, "dist": 7000 },
+  { "id": "M20", "name": "Trifid Nebula", "type": "Nebula", "con": "Sgr", "ra": 270.600, "dec": -23.030, "mag": 6.3, "dist": 5200 },
+  { "id": "M3", "name": "Messier 3", "type": "Globular Cluster", "con": "CVn", "ra": 205.548, "dec": 28.377, "mag": 6.2, "dist": 33900 }
+]
