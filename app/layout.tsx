@@ -24,10 +24,30 @@ const plexMono = IBM_Plex_Mono({
   display: "swap",
 });
 
+const SITE_URL = "https://project-skyview.vercel.app/";
+const SITE_DESCRIPTION =
+  "A real-time cosmic radar: track the ISS, satellites and celestial bodies passing through your zenith.";
+
 export const metadata: Metadata = {
+  // Anchors every relative metadata URL (Open Graph / Twitter images, canonical
+  // links) to the live production origin, so social shares — e.g. the "Look Up"
+  // alert on WhatsApp — resolve to absolute URLs and preview correctly.
+  metadataBase: new URL(SITE_URL),
   title: "Project Skyview — The Celestial Eye",
-  description:
-    "A real-time cosmic radar: track the ISS, satellites and celestial bodies passing through your zenith.",
+  description: SITE_DESCRIPTION,
+  applicationName: "Project Skyview",
+  openGraph: {
+    type: "website",
+    url: SITE_URL,
+    siteName: "Project Skyview",
+    title: "Project Skyview — The Celestial Eye",
+    description: SITE_DESCRIPTION,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Project Skyview — The Celestial Eye",
+    description: SITE_DESCRIPTION,
+  },
 };
 
 export const viewport: Viewport = {
