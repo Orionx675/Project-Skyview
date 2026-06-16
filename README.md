@@ -78,7 +78,4 @@ components/ui/                Modal / ToggleSwitch / AnimatedNumber primitives
 next.config.js                Cesium asset copy + CESIUM_BASE_URL define
 ```
 
-## Hackathon timeline
 
-- Round 1 blueprint: submitted, passed ✓
-- Round 2 build judged at the valedictory ceremony, **30 June 2026**.
