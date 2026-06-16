@@ -31,9 +31,54 @@ import { computeGroundTrack, propagateToDate } from "@/utils/orbitalMath";
 import { registerViewerBridge } from "@/lib/viewerBridge";
 import type { CatalogEntry } from "@/lib/tracker";
 import type { Observer } from "@/lib/layers";
-import "cesium/Build/Cesium/Widgets/widgets.css";
 
 type CesiumModule = typeof import("cesium");
+
+// =============================================================================
+// Cesium is loaded from a CDN <script> at runtime, NOT bundled by webpack.
+// Why: Next.js production builds code-split the dynamic `import("cesium")` into
+// a chunk that downloads (200) but never self-registers with webpack's runtime
+// -> ChunkLoadError -> black globe (works in dev, fails in every prod build /
+// Vercel). The UMD CDN build sidesteps webpack entirely and also serves
+// Cesium's Workers/Assets/Widgets from the same origin via CESIUM_BASE_URL.
+// Pinned to the installed version so the runtime matches our TypeScript types.
+// =============================================================================
+const CESIUM_VERSION = "1.142.0";
+const CESIUM_CDN = `https://cdn.jsdelivr.net/npm/cesium@${CESIUM_VERSION}/Build/Cesium`;
+
+let cesiumLoader: Promise<CesiumModule> | null = null;
+
+/** Load Cesium (CSS + JS) from the CDN once; resolve with the window global. */
+function loadCesium(): Promise<CesiumModule> {
+  const w = window as unknown as { Cesium?: CesiumModule; CESIUM_BASE_URL?: string };
+  if (w.Cesium) return Promise.resolve(w.Cesium);
+  if (cesiumLoader) return cesiumLoader;
+
+  // Tell Cesium where to fetch its Workers/Assets/Widgets (same CDN, matched version).
+  w.CESIUM_BASE_URL = `${CESIUM_CDN}/`;
+
+  if (!document.querySelector("link[data-cesium-widgets]")) {
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = `${CESIUM_CDN}/Widgets/widgets.css`;
+    link.setAttribute("data-cesium-widgets", "");
+    document.head.appendChild(link);
+  }
+
+  cesiumLoader = new Promise<CesiumModule>((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = `${CESIUM_CDN}/Cesium.js`;
+    script.async = true;
+    script.onload = () => {
+      const C = (window as unknown as { Cesium?: CesiumModule }).Cesium;
+      if (C) resolve(C);
+      else reject(new Error("Cesium global missing after CDN load"));
+    };
+    script.onerror = () => reject(new Error("Failed to load Cesium from CDN"));
+    document.head.appendChild(script);
+  });
+  return cesiumLoader;
+}
 
 interface CesiumGlobeProps {
   observer: Observer;
@@ -485,15 +530,9 @@ export default function CesiumGlobe({
     let unsubscribe: (() => void) | null = null;
 
     (async () => {
-      // Cesium loads its Workers/Assets/Widgets at runtime from CESIUM_BASE_URL.
-      // Those files are copied to /public/cesium by the `copy-cesium` npm script
-      // (see package.json) and served at /cesium — so point Cesium there BEFORE
-      // importing it. Must run in the browser only; this whole block is gated by
-      // next/dynamic({ ssr: false }).
-      (window as unknown as { CESIUM_BASE_URL?: string }).CESIUM_BASE_URL = "/cesium";
-
-      // Deferred import keeps Cesium's ~3 MB out of the initial page bundle.
-      const Cesium = await import("cesium");
+      // Load Cesium from the CDN (see loadCesium note above). This block only
+      // runs in the browser — the component is gated by next/dynamic({ssr:false}).
+      const Cesium = await loadCesium();
       if (disposed || !containerRef.current) return;
       cesiumRef.current = Cesium;
 
@@ -596,7 +635,10 @@ export default function CesiumGlobe({
       syncObserver();
       applyTick();
       flyToObserver(2.5);
-    })();
+    })().catch((err) => {
+      // Surface init failures instead of silently leaving a black globe.
+      console.error("[CesiumGlobe] viewer initialization failed:", err);
+    });
 
     return () => {
       disposed = true;

@@ -4,9 +4,8 @@
   "private": true,
   "description": "Project Zenith: The Celestial Eye — a real-time cosmic radar (AstralWeb Innovate 2026)",
   "scripts": {
-    "copy-cesium": "cpx \"node_modules/cesium/Build/Cesium/**\" public/cesium",
-    "dev": "npm run copy-cesium && next dev",
-    "build": "npm run copy-cesium && next build",
+    "dev": "next dev",
+    "build": "next build",
     "start": "next start"
   },
   "dependencies": {
