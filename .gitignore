@@ -2,6 +2,8 @@ node_modules/
 .next/
 out/
 build/
+# Cesium assets copied in by the `copy-cesium` script (regenerated each build)
+public/cesium/
 *.tsbuildinfo
 next-env.d.ts
 .env*.local

@@ -485,8 +485,14 @@ export default function CesiumGlobe({
     let unsubscribe: (() => void) | null = null;
 
     (async () => {
-      // Deferred import keeps Cesium's ~3 MB out of the initial page bundle;
-      // CESIUM_BASE_URL was baked in by next.config.js.
+      // Cesium loads its Workers/Assets/Widgets at runtime from CESIUM_BASE_URL.
+      // Those files are copied to /public/cesium by the `copy-cesium` npm script
+      // (see package.json) and served at /cesium — so point Cesium there BEFORE
+      // importing it. Must run in the browser only; this whole block is gated by
+      // next/dynamic({ ssr: false }).
+      (window as unknown as { CESIUM_BASE_URL?: string }).CESIUM_BASE_URL = "/cesium";
+
+      // Deferred import keeps Cesium's ~3 MB out of the initial page bundle.
       const Cesium = await import("cesium");
       if (disposed || !containerRef.current) return;
       cesiumRef.current = Cesium;
