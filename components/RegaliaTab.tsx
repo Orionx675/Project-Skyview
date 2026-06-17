@@ -9,12 +9,27 @@
 
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Sparkles, Spline, Type, Orbit, Loader2, X, Star as StarIcon, Camera, Telescope } from "lucide-react";
+import { Sparkles, Spline, Type, Orbit, Loader2, X, Star as StarIcon, Camera, Telescope, MapPin } from "lucide-react";
 import ToggleSwitch from "@/components/ui/ToggleSwitch";
 import { useRegaliaSky, type RegaliaLayers, type RegaliaSelection, type FrameAnalysis } from "@/hooks/useRegaliaSky";
+import { useViewerBridge } from "@/lib/viewerBridge";
 import { SENSOR_PRESETS, DEFAULT_SENSOR, DEFAULT_FOCAL_LENGTH_MM, fovDegrees } from "@/lib/fovMath";
+import { localAltAz } from "@/lib/starCatalog";
+import type { Observer } from "@/lib/layers";
+
+/** Live local horizontal coordinates of the inspected object. */
+interface LiveAltAz {
+  altitude: number;
+  azimuth: number;
+}
+
+/** Compass point (16-wind) for an azimuth — friendlier than bare degrees. */
+function azCompass(azimuthDeg: number): string {
+  const pts = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+  return pts[Math.round((((azimuthDeg % 360) + 360) % 360) / 22.5) % 16];
+}
 
 const LAYER_META: {
   key: keyof RegaliaLayers;
@@ -29,7 +44,7 @@ const LAYER_META: {
   { key: "dso", label: "Deep Sky Objects", desc: "Messier galaxies, nebulae & clusters", color: "#fb7185", Icon: Orbit },
 ];
 
-export default function RegaliaTab({ active }: { active: boolean }) {
+export default function RegaliaTab({ active, observer }: { active: boolean; observer: Observer }) {
   const [layers, setLayers] = useState<RegaliaLayers>({
     stars: true,
     lines: true,
@@ -46,6 +61,7 @@ export default function RegaliaTab({ active }: { active: boolean }) {
     active,
     layers,
     onSelect: setSelection,
+    observer,
     lockTarget: selection,
     focalLengthMm,
     sensor,
@@ -58,10 +74,76 @@ export default function RegaliaTab({ active }: { active: boolean }) {
   const hFov = fovDegrees(sensor.widthMm, focalLengthMm);
   const vFov = fovDegrees(sensor.heightMm, focalLengthMm);
 
+  // Live local Alt/Az of the inspected object, recomputed each second against
+  // the sim clock (Cosmic Time Machine) + observer location.
+  const bridge = useViewerBridge();
+  const [liveAltAz, setLiveAltAz] = useState<LiveAltAz | null>(null);
+  useEffect(() => {
+    if (!active || !selection) {
+      setLiveAltAz(null);
+      return;
+    }
+    const ra = selection.kind === "star" ? selection.star.ra : selection.dso.ra;
+    const dec = selection.kind === "star" ? selection.star.dec : selection.dso.dec;
+    const tick = () => {
+      const date = bridge
+        ? bridge.Cesium.JulianDate.toDate(bridge.viewer.clock.currentTime)
+        : new Date();
+      setLiveAltAz(localAltAz(ra, dec, observer.latitude, observer.longitude, date));
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [active, selection, observer.latitude, observer.longitude, bridge]);
+
   if (!active) return null;
 
   return (
     <>
+      {/* ============ centered FOV viewfinder reticle (over the sky) ========= */}
+      {/* Frames the centre of the local sky; the camera FOV (driven by the
+          focal slider in useRegaliaSky) zooms the sky inside this frame. */}
+      <div className="pointer-events-none absolute inset-0 z-10 grid place-items-center">
+        <div
+          className="relative"
+          style={{ height: "56vmin", aspectRatio: `${sensor.widthMm} / ${sensor.heightMm}` }}
+        >
+          <svg
+            viewBox="0 0 120 90"
+            preserveAspectRatio="none"
+            className="h-full w-full text-zenith-cyan"
+          >
+            {/* frame border */}
+            <rect
+              x="1" y="1" width="118" height="88"
+              fill="none" stroke="currentColor" strokeWidth="1" strokeOpacity="0.85"
+              vectorEffect="non-scaling-stroke"
+            />
+            {/* rule-of-thirds */}
+            <g stroke="currentColor" strokeWidth="1" strokeOpacity="0.2" vectorEffect="non-scaling-stroke">
+              <line x1="40" y1="1" x2="40" y2="89" />
+              <line x1="80" y1="1" x2="80" y2="89" />
+              <line x1="1" y1="30" x2="119" y2="30" />
+              <line x1="1" y1="60" x2="119" y2="60" />
+            </g>
+            {/* centre crosshair */}
+            <g stroke="currentColor" strokeWidth="1" strokeOpacity="0.6" vectorEffect="non-scaling-stroke">
+              <line x1="54" y1="45" x2="66" y2="45" />
+              <line x1="60" y1="39" x2="60" y2="51" />
+            </g>
+          </svg>
+          {/* corner brackets */}
+          <span className="absolute left-0 top-0 h-4 w-4 border-l-2 border-t-2 border-zenith-cyan" />
+          <span className="absolute right-0 top-0 h-4 w-4 border-r-2 border-t-2 border-zenith-cyan" />
+          <span className="absolute bottom-0 left-0 h-4 w-4 border-b-2 border-l-2 border-zenith-cyan" />
+          <span className="absolute bottom-0 right-0 h-4 w-4 border-b-2 border-r-2 border-zenith-cyan" />
+          {/* FOV readout */}
+          <span className="absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-panel/80 px-2 py-0.5 font-mono text-[10px] tracking-wider text-zenith-cyan backdrop-blur-sm">
+            {hFov.toFixed(1)}° × {vFov.toFixed(1)}° · {focalLengthMm}mm
+          </span>
+        </div>
+      </div>
+
       {/* ===================== layer control panel (left) ===================== */}
       <motion.aside
         initial={{ opacity: 0, x: -28 }}
@@ -80,6 +162,16 @@ export default function RegaliaTab({ active }: { active: boolean }) {
             <h2 className="text-sm font-bold tracking-tight text-starlight">Regalia</h2>
             <p className="text-[11px] text-stardust">Eyes of Stars · planetarium mode</p>
           </div>
+        </div>
+
+        {/* Active observer location — the sky is filtered to this horizon. */}
+        <div className="flex items-center gap-2 border-b border-grid bg-void/40 px-4 py-2 font-mono text-[11px]">
+          <MapPin size={12} className="shrink-0 text-signal" />
+          <span className="text-stardust">
+            Viewing from Lat:{" "}
+            <span className="text-starlight">{observer.latitude.toFixed(2)}</span>, Lon:{" "}
+            <span className="text-starlight">{observer.longitude.toFixed(2)}</span>
+          </span>
         </div>
 
         <ul className="space-y-2 p-3">
@@ -124,42 +216,48 @@ export default function RegaliaTab({ active }: { active: boolean }) {
       </motion.aside>
 
       {/* ============ object inspector + FOV viewfinder (right) ============ */}
-      <AnimatePresence>
-        {selection && (
-          <motion.div
-            key={selection.kind === "star" ? `star-${selection.star.hip}` : `dso-${selection.dso.id}`}
-            initial={{ opacity: 0, x: 28, scale: 0.97 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            exit={{ opacity: 0, x: 28, scale: 0.97 }}
-            transition={{ type: "spring", stiffness: 320, damping: 30 }}
-            className="scrollbar-thin absolute right-4 top-4 z-20 flex max-h-[calc(100vh-6rem)] w-80
-                       flex-col gap-3 overflow-y-auto"
-          >
-            {/* — object inspector — */}
-            <section
+      {/* The viewfinder is ALWAYS available (it controls the local-sky FOV);
+          the inspector card slides in above it when an object is selected. */}
+      <motion.div
+        initial={{ opacity: 0, x: 28 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: 28 }}
+        transition={{ type: "spring", stiffness: 320, damping: 30 }}
+        className="scrollbar-thin absolute right-4 top-4 z-20 flex max-h-[calc(100vh-6rem)] w-80
+                   flex-col gap-3 overflow-y-auto"
+      >
+        <AnimatePresence>
+          {selection && (
+            <motion.section
+              key={selection.kind === "star" ? `star-${selection.star.hip}` : `dso-${selection.dso.id}`}
+              initial={{ opacity: 0, y: -12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ type: "spring", stiffness: 360, damping: 30 }}
               className="overflow-hidden rounded-2xl border border-grid bg-panel/90 shadow-2xl shadow-black/60 backdrop-blur-md"
               aria-label="Object inspector"
             >
               {selection.kind === "star" ? (
-                <StarInspector selection={selection} onClose={() => setSelection(null)} />
+                <StarInspector selection={selection} liveAltAz={liveAltAz} onClose={() => setSelection(null)} />
               ) : (
-                <DsoInspector selection={selection} onClose={() => setSelection(null)} />
+                <DsoInspector selection={selection} liveAltAz={liveAltAz} onClose={() => setSelection(null)} />
               )}
-            </section>
+            </motion.section>
+          )}
+        </AnimatePresence>
 
-            {/* — FOV viewfinder: sensor calibration + frame analysis — */}
-            <Viewfinder
-              sensorId={sensorId}
-              setSensorId={setSensorId}
-              focalLengthMm={focalLengthMm}
-              setFocalLengthMm={setFocalLengthMm}
-              hFov={hFov}
-              vFov={vFov}
-              frameAnalysis={frameAnalysis}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
+        {/* — FOV viewfinder: sensor calibration + frame analysis — */}
+        <Viewfinder
+          sensorId={sensorId}
+          setSensorId={setSensorId}
+          focalLengthMm={focalLengthMm}
+          setFocalLengthMm={setFocalLengthMm}
+          hFov={hFov}
+          vFov={vFov}
+          locked={selection !== null}
+          frameAnalysis={frameAnalysis}
+        />
+      </motion.div>
     </>
   );
 }
@@ -173,6 +271,7 @@ function Viewfinder({
   setFocalLengthMm,
   hFov,
   vFov,
+  locked,
   frameAnalysis,
 }: {
   sensorId: string;
@@ -181,6 +280,7 @@ function Viewfinder({
   setFocalLengthMm: (mm: number) => void;
   hFov: number;
   vFov: number;
+  locked: boolean;
   frameAnalysis: FrameAnalysis | null;
 }) {
   return (
@@ -246,7 +346,7 @@ function Viewfinder({
           </h4>
           {!frameAnalysis ? (
             <p className="rounded-lg border border-grid p-3 font-mono text-[11px] text-faint">
-              Analyzing the framed field…
+              {locked ? "Analyzing the framed field…" : "Click a star or DSO to analyze its frame."}
             </p>
           ) : (
             <div className="rounded-lg border border-grid bg-void/40 p-3">
@@ -332,11 +432,55 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
+/** Static RA/Dec + the object's LIVE local Alt/Az (recomputed each second). */
+function CoordinatesBlock({
+  ra,
+  dec,
+  liveAltAz,
+}: {
+  ra: number;
+  dec: number;
+  liveAltAz: LiveAltAz | null;
+}) {
+  const above = liveAltAz ? liveAltAz.altitude > 0 : null;
+  return (
+    <>
+      <div className="divide-y divide-grid border-t border-grid">
+        <Row label="Right Ascension" value={`${ra.toFixed(2)}°`} />
+        <Row label="Declination" value={`${dec >= 0 ? "+" : ""}${dec.toFixed(2)}°`} />
+      </div>
+      <div className="border-t border-zenith-cyan/25 bg-zenith-cyan/5">
+        <div className="flex items-center justify-between px-4 pt-2">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-zenith-cyan">
+            Local Sky · Live
+          </span>
+          {above !== null && (
+            <span
+              className={`rounded px-1.5 py-0.5 text-[9px] font-bold tracking-wider ${
+                above ? "bg-signal/15 text-signal" : "bg-alert/15 text-alert"
+              }`}
+            >
+              {above ? "ABOVE HORIZON" : "BELOW HORIZON"}
+            </span>
+          )}
+        </div>
+        <Row label="Altitude" value={liveAltAz ? `${liveAltAz.altitude.toFixed(1)}°` : "—"} />
+        <Row
+          label="Azimuth"
+          value={liveAltAz ? `${liveAltAz.azimuth.toFixed(1)}° ${azCompass(liveAltAz.azimuth)}` : "—"}
+        />
+      </div>
+    </>
+  );
+}
+
 function StarInspector({
   selection,
+  liveAltAz,
   onClose,
 }: {
   selection: Extract<RegaliaSelection, { kind: "star" }>;
+  liveAltAz: LiveAltAz | null;
   onClose: () => void;
 }) {
   const s = selection.star;
@@ -357,15 +501,18 @@ function StarInspector({
         <Row label="Visual Magnitude" value={s.mag.toFixed(2)} />
         <Row label="B–V Color Index" value={s.bv.toFixed(2)} />
       </div>
+      <CoordinatesBlock ra={s.ra} dec={s.dec} liveAltAz={liveAltAz} />
     </>
   );
 }
 
 function DsoInspector({
   selection,
+  liveAltAz,
   onClose,
 }: {
   selection: Extract<RegaliaSelection, { kind: "dso" }>;
+  liveAltAz: LiveAltAz | null;
   onClose: () => void;
 }) {
   const m = selection.dso;
@@ -386,6 +533,7 @@ function DsoInspector({
         <Row label="Distance" value={ly} />
         <Row label="Visual Magnitude" value={m.mag.toFixed(1)} />
       </div>
+      <CoordinatesBlock ra={m.ra} dec={m.dec} liveAltAz={liveAltAz} />
     </>
   );
 }

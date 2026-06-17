@@ -15,6 +15,7 @@
 // time exactly like the real sky. See hooks/useRegaliaSky.ts.
 // =============================================================================
 
+import { gstime } from "satellite.js";
 import type * as CesiumNS from "cesium";
 
 export interface Star {
@@ -55,6 +56,50 @@ export interface MessierObject {
 export const CELESTIAL_RADIUS_M = 1.5e8;
 
 const DEG2RAD = Math.PI / 180;
+const RAD2DEG = 180 / Math.PI;
+
+/**
+ * Transform a star's static equatorial coordinates (RA/Dec, degrees) into the
+ * observer's LOCAL horizontal coordinates (altitude/azimuth, degrees) for a
+ * given instant — the heart of the Stellarium-style local-horizon view.
+ *
+ *   · `date` is the simulation time (pass the Cosmic Time Machine's clock so
+ *     the sky matches whatever epoch the user scrubbed to).
+ *   · GMST (Greenwich Mean Sidereal Time) comes from satellite.js `gstime`,
+ *     the same source the rest of the app uses for ECI→ECF — so this stays
+ *     perfectly consistent with where the stars are rendered on the dome.
+ *
+ * altitude < 0  ⇒  the object is below the observer's horizon (hidden).
+ * azimuth is measured from North (0°) clockwise through East (90°).
+ */
+export function localAltAz(
+  raDeg: number,
+  decDeg: number,
+  latDeg: number,
+  lonDeg: number,
+  date: Date
+): { altitude: number; azimuth: number } {
+  const gmst = gstime(date); // radians
+  // Local hour angle = local sidereal time − right ascension.
+  const ha = gmst + lonDeg * DEG2RAD - raDeg * DEG2RAD;
+  const dec = decDeg * DEG2RAD;
+  const lat = latDeg * DEG2RAD;
+
+  const sinAlt = Math.sin(dec) * Math.sin(lat) + Math.cos(dec) * Math.cos(lat) * Math.cos(ha);
+  const altitude = Math.asin(Math.max(-1, Math.min(1, sinAlt))) * RAD2DEG;
+
+  // North-based azimuth: 0°=N, 90°=E, 180°=S, 270°=W.
+  const azimuth =
+    (Math.atan2(
+      -Math.cos(dec) * Math.sin(ha),
+      Math.sin(dec) * Math.cos(lat) - Math.cos(dec) * Math.cos(ha) * Math.sin(lat)
+    ) *
+      RAD2DEG +
+      360) %
+    360;
+
+  return { altitude, azimuth };
+}
 
 /**
  * Convert equatorial coordinates to a Cartesian3 on the celestial sphere, in

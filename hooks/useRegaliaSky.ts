@@ -22,7 +22,7 @@
 
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { gstime } from "satellite.js";
 import type * as CesiumNS from "cesium";
 import { useViewerBridge } from "@/lib/viewerBridge";
@@ -32,6 +32,7 @@ import {
   magnitudeToPixelSize,
   bvToColorRgb,
   dsoCategoryColor,
+  localAltAz,
   loadStarCatalog,
   loadConstellations,
   loadMessier,
@@ -39,17 +40,15 @@ import {
   type Star,
 } from "@/lib/starCatalog";
 import {
-  crosshairLines,
   equatorialUnitVec3,
   fovDegrees,
   frameBasis,
   isInFrame,
   limitingMagnitude,
-  reticleOutline,
   tanLimits,
-  thirdsGrid,
   type SensorPreset,
 } from "@/lib/fovMath";
+import type { Observer } from "@/lib/layers";
 
 export type RegaliaSelection =
   | { kind: "star"; star: Star }
@@ -92,18 +91,22 @@ interface Collections {
   art?: CesiumNS.LabelCollection;
   dsoPoints?: CesiumNS.PointPrimitiveCollection;
   dsoLabels?: CesiumNS.LabelCollection;
-  reticle?: CesiumNS.PolylineCollection;
   handler?: CesiumNS.ScreenSpaceEventHandler;
   removePreRender?: () => void;
+  horizonTimer?: ReturnType<typeof setInterval>;
   // Catalog kept for the FOV effect (magnitude reveal + frame analysis).
   starList?: Star[];
   messier?: MessierObject[];
+  // Parallel arrays for horizon filtering (same order as the collections).
+  lineSegments?: { a: number; b: number }[]; // HIP pair per constellation polyline
+  artMembers?: number[][]; // member HIPs per constellation name-label
 }
 
 export function useRegaliaSky({
   active,
   layers,
   onSelect,
+  observer,
   lockTarget = null,
   focalLengthMm = 50,
   sensor,
@@ -111,6 +114,8 @@ export function useRegaliaSky({
   active: boolean;
   layers: RegaliaLayers;
   onSelect: (selection: RegaliaSelection) => void;
+  /** Observer location — drives the local-horizon filtering. */
+  observer: Observer;
   /** The clicked object to frame; null = no lock (free sky view). */
   lockTarget?: RegaliaSelection | null;
   focalLengthMm?: number;
@@ -132,6 +137,13 @@ export function useRegaliaSky({
   onSelectRef.current = onSelect;
   const layersRef = useRef(layers);
   layersRef.current = layers;
+  // Latest props read by applyHorizon (called from an interval + effects).
+  const bridgeRef = useRef(bridge);
+  bridgeRef.current = bridge;
+  const observerRef = useRef(observer);
+  observerRef.current = observer;
+  /** Faintest magnitude to reveal: a finite limit while locked, ∞ otherwise. */
+  const magLimitRef = useRef(Infinity);
   /** Inertial unit direction of the lock target (null when unlocked); read by
    *  the per-frame updater to keep the camera aimed as the sky rotates. */
   const lockDirRef = useRef<CesiumNS.Cartesian3 | null>(null);
@@ -146,6 +158,60 @@ export function useRegaliaSky({
     if (r.dsoPoints) r.dsoPoints.show = l.dso;
     if (r.dsoLabels) r.dsoLabels.show = l.dso;
   }
+
+  /**
+   * LOCAL HORIZON FILTER — the planetarium's "strictly relevant to location"
+   * core. For the observer + current sim clock, compute each object's local
+   * altitude and hide everything below 0° (under the horizon). Stars also
+   * respect the magnitude reveal; constellation lines hide if EITHER endpoint
+   * is down; a constellation name shows only if a member star is up; DSOs hide
+   * when below the horizon. Cheap enough (~100 objects) to run at 1 Hz and on
+   * every observer/time change.
+   */
+  const applyHorizon = useCallback(() => {
+    const b = bridgeRef.current;
+    if (!b || b.viewer.isDestroyed()) return;
+    const r = refs.current;
+    if (!r.stars || !r.starList) return;
+
+    const date = b.Cesium.JulianDate.toDate(b.viewer.clock.currentTime);
+    const { latitude, longitude } = observerRef.current;
+    const limit = magLimitRef.current;
+
+    // Stars (+ remember each altitude so the line/art passes can reuse it).
+    const altByHip = new Map<number, number>();
+    for (let i = 0; i < r.stars.length; i++) {
+      const p = r.stars.get(i);
+      const s = (p.id as RegaliaSelection & { kind: "star" }).star;
+      const alt = localAltAz(s.ra, s.dec, latitude, longitude, date).altitude;
+      altByHip.set(s.hip, alt);
+      p.show = alt > 0 && s.mag <= limit;
+    }
+    const up = (hip: number) => (altByHip.get(hip) ?? -90) > 0;
+
+    // Constellation lines: hide a segment if either endpoint is below horizon.
+    if (r.lines && r.lineSegments) {
+      for (let i = 0; i < r.lineSegments.length; i++) {
+        const seg = r.lineSegments[i];
+        r.lines.get(i).show = up(seg.a) && up(seg.b);
+      }
+    }
+    // Constellation name-labels: show only if a member star is above horizon.
+    if (r.art && r.artMembers) {
+      for (let i = 0; i < r.artMembers.length; i++) {
+        r.art.get(i).show = r.artMembers[i].some(up);
+      }
+    }
+    // Deep-sky objects: hide point + label when below horizon.
+    if (r.dsoPoints && r.dsoLabels && r.messier) {
+      for (let i = 0; i < r.messier.length; i++) {
+        const m = r.messier[i];
+        const visible = localAltAz(m.ra, m.dec, latitude, longitude, date).altitude > 0;
+        r.dsoPoints.get(i).show = visible;
+        r.dsoLabels.get(i).show = visible;
+      }
+    }
+  }, []);
 
   // ---------------------------------------------------------------- build --
   useEffect(() => {
@@ -200,7 +266,10 @@ export function useRegaliaSky({
       }
 
       // ---- constellation lines: one PolylineCollection --------------------
+      // lineSegments stays parallel to the collection so the horizon filter
+      // can hide a segment when either endpoint star drops below the horizon.
       const lines = scene.primitives.add(new Cesium.PolylineCollection());
+      const lineSegments: { a: number; b: number }[] = [];
       const lineColor = Cesium.Color.fromCssColorString("#7c93d8").withAlpha(0.55);
       for (const c of cons) {
         for (const [a, b] of c.segments) {
@@ -212,20 +281,28 @@ export function useRegaliaSky({
             width: 1.4,
             material: Cesium.Material.fromType("Color", { color: lineColor }),
           });
+          lineSegments.push({ a, b });
         }
       }
 
       // ---- constellation "art": name labels at each figure's centroid -----
+      // artMembers stays parallel so a name hides when none of its stars are up.
       const art = scene.primitives.add(new Cesium.LabelCollection());
+      const artMembers: number[][] = [];
       for (const c of cons) {
         const pts: CesiumNS.Cartesian3[] = [];
+        const members: number[] = [];
         for (const seg of c.segments) {
           for (const hip of seg) {
             const p = posByHip.get(hip);
-            if (p) pts.push(p);
+            if (p) {
+              pts.push(p);
+              members.push(hip);
+            }
           }
         }
         if (pts.length === 0) continue;
+        artMembers.push(members);
         const centroid = new Cesium.Cartesian3();
         for (const p of pts) Cesium.Cartesian3.add(centroid, p, centroid);
         Cesium.Cartesian3.divideByScalar(centroid, pts.length, centroid);
@@ -270,18 +347,16 @@ export function useRegaliaSky({
         });
       }
 
-      // ---- FOV reticle: drawn into this collection when a target is locked
-      const reticle = scene.primitives.add(new Cesium.PolylineCollection());
-
       refs.current = {
         stars: starPoints,
         lines,
         art,
         dsoPoints,
         dsoLabels,
-        reticle,
         starList: stars,
         messier,
+        lineSegments,
+        artMembers,
       };
       applyVisibility(layersRef.current);
 
@@ -299,7 +374,7 @@ export function useRegaliaSky({
         const m3 = new Cesium.Matrix3(cos, sin, 0, -sin, cos, 0, 0, 0, 1);
         const mat = Cesium.Matrix4.fromRotationTranslation(m3, Cesium.Cartesian3.ZERO, scratch);
         const r = refs.current;
-        for (const col of [r.stars, r.lines, r.art, r.dsoPoints, r.dsoLabels, r.reticle]) {
+        for (const col of [r.stars, r.lines, r.art, r.dsoPoints, r.dsoLabels]) {
           if (col) col.modelMatrix = mat;
         }
 
@@ -336,6 +411,11 @@ export function useRegaliaSky({
       }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
       refs.current.handler = handler;
 
+      // Local-horizon filter: apply now, then re-evaluate every second so the
+      // sky updates as real time advances or the Cosmic Time Machine scrubs.
+      applyHorizon();
+      refs.current.horizonTimer = setInterval(applyHorizon, 1000);
+
       if (!cancelled) {
         setStatus({ loading: false, error: null, starCount: stars.length, dsoCount: messier.length });
         setBuilt((b) => b + 1); // let the FOV effect (re)apply against fresh collections
@@ -347,8 +427,9 @@ export function useRegaliaSky({
       const r = refs.current;
       r.removePreRender?.();
       r.handler?.destroy();
+      if (r.horizonTimer) clearInterval(r.horizonTimer);
       if (!viewer.isDestroyed()) {
-        for (const col of [r.stars, r.lines, r.art, r.dsoPoints, r.dsoLabels, r.reticle]) {
+        for (const col of [r.stars, r.lines, r.art, r.dsoPoints, r.dsoLabels]) {
           if (col) viewer.scene.primitives.remove(col); // remove() also destroys it
         }
         // Restore any scene state the deep-sky lock changed.
@@ -359,6 +440,7 @@ export function useRegaliaSky({
       }
       lockDirRef.current = null;
       lockedPrevRef.current = false;
+      magLimitRef.current = Infinity;
       refs.current = {};
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -370,33 +452,38 @@ export function useRegaliaSky({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [layers.stars, layers.lines, layers.art, layers.dso]);
 
-  // ------------------------------------------------------------- FOV lock --
-  // Lightweight: redraws the reticle, re-applies the magnitude reveal, aims
-  // the camera and recomputes Frame Analysis. NEVER rebuilds the catalog, so
-  // it can run on every focal-slider tick without cost.
+  // ----------------------------------------------------- FOV / camera zoom --
+  // Runs on every focal/sensor/lock change. ALWAYS scales the Cesium camera
+  // frustum to the lens (the optical zoom the centered HTML reticle frames),
+  // sets the magnitude-reveal limit, and — when an object is locked — aims the
+  // camera at it and computes Frame Analysis. Visibility itself is delegated
+  // to applyHorizon() so horizon + magnitude stay in one place.
   useEffect(() => {
     if (!active || !bridge) return;
     const { viewer, Cesium } = bridge;
     if (viewer.isDestroyed()) return;
     const r = refs.current;
-    if (!r.reticle || !r.stars || !r.starList || !r.messier) return; // not built yet
+    if (!r.stars || !r.starList || !r.messier) return; // not built yet
     const scene = viewer.scene;
     const ctrl = scene.screenSpaceCameraController;
     const frustum = viewer.camera.frustum;
 
-    r.reticle.removeAll();
+    // Optical scaling: a longer lens narrows the camera FOV (zooms the sky).
+    const fovH = fovDegrees(sensor.widthMm, focalLengthMm);
+    if (frustum instanceof Cesium.PerspectiveFrustum) {
+      frustum.fov = Cesium.Math.toRadians(Math.max(1.2, Math.min(80, fovH * 2.0)));
+    }
 
-    // ---- unlocked: reveal all naked-eye stars, restore the free sky view --
+    // ---- unlocked: free local-sky view; reveal all naked-eye stars -------
     if (!lockTarget) {
       lockDirRef.current = null;
-      for (let i = 0; i < r.stars.length; i++) r.stars.get(i).show = true;
+      magLimitRef.current = Infinity;
       setFrameAnalysis(null);
       if (lockedPrevRef.current) {
         lockedPrevRef.current = false;
         ctrl.enableInputs = true;
         scene.globe.show = true;
-        if (frustum instanceof Cesium.PerspectiveFrustum) frustum.fov = Cesium.Math.toRadians(60);
-        // Return to the idle "Earth among the stars" vantage.
+        // Return to the idle "Earth among the stars" vantage (fov already set).
         const dest = new Cesium.Cartesian3(0, -7e7, 2.5e7);
         const dir = Cesium.Cartesian3.normalize(
           Cesium.Cartesian3.negate(dest, new Cesium.Cartesian3()),
@@ -404,6 +491,7 @@ export function useRegaliaSky({
         );
         viewer.camera.setView({ destination: dest, orientation: { direction: dir, up: Cesium.Cartesian3.UNIT_Z } });
       }
+      applyHorizon(); // re-show everything above the horizon (no mag limit)
       return;
     }
 
@@ -416,45 +504,12 @@ export function useRegaliaSky({
 
     const basis = frameBasis(dInert);
     const { tanH, tanV } = tanLimits(sensor, focalLengthMm);
-    const R = CELESTIAL_RADIUS_M;
-    const toCart = (v: { x: number; y: number; z: number }) =>
-      new Cesium.Cartesian3(v.x * R, v.y * R, v.z * R);
-    const cyan = Cesium.Color.fromCssColorString("#2dd4ff");
 
-    // Frame border, rule-of-thirds, crosshair — all on the celestial sphere.
-    r.reticle.add({
-      positions: reticleOutline(basis, tanH, tanV, 12).map(toCart),
-      width: 2.6,
-      material: Cesium.Material.fromType("Color", { color: cyan }),
-    });
-    for (const line of thirdsGrid(basis, tanH, tanV, 8)) {
-      r.reticle.add({
-        positions: line.map(toCart),
-        width: 1,
-        material: Cesium.Material.fromType("Color", { color: cyan.withAlpha(0.22) }),
-      });
-    }
-    for (const line of crosshairLines(basis, tanH, tanV)) {
-      r.reticle.add({
-        positions: line.map(toCart),
-        width: 1.3,
-        material: Cesium.Material.fromType("Color", { color: cyan.withAlpha(0.6) }),
-      });
-    }
-
-    // ---- dynamic magnitude: a longer lens reveals dimmer stars -----------
+    // Dynamic magnitude: a longer lens reveals dimmer stars (applied in applyHorizon).
     const limit = limitingMagnitude(sensor, focalLengthMm);
-    for (let i = 0; i < r.stars.length; i++) {
-      const p = r.stars.get(i);
-      const sel = p.id as RegaliaSelection;
-      if (sel.kind === "star") p.show = sel.star.mag <= limit;
-    }
+    magLimitRef.current = limit;
+    applyHorizon();
 
-    // ---- camera: zoom the frustum to the framing, lock + hide Earth ------
-    const fovH = fovDegrees(sensor.widthMm, focalLengthMm);
-    if (frustum instanceof Cesium.PerspectiveFrustum) {
-      frustum.fov = Cesium.Math.toRadians(Math.max(1.2, Math.min(80, fovH * 2.0)));
-    }
     ctrl.enableInputs = false; // the lock owns the camera; focal slider = zoom
     scene.globe.show = false; // pure sky; camera sits at the sphere's center
 
@@ -481,6 +536,12 @@ export function useRegaliaSky({
     setFrameAnalysis({ constellation, starCount: inStars.length, dsoCount: inDsos.length, limitingMag: limit, objects });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active, bridge, built, lockTarget, focalLengthMm, sensor]);
+
+  // Re-filter the sky immediately when the observer location changes.
+  useEffect(() => {
+    applyHorizon();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [observer.latitude, observer.longitude, built]);
 
   return { status, frameAnalysis };
 }
