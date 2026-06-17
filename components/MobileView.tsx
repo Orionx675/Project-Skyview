@@ -78,10 +78,20 @@ export default function MobileView(props: SkyViewProps) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [magicOn, setMagicOn] = useState(false);
 
-  // Magic Window only makes sense in the free tracker view (no camera lock /
-  // planetarium owning the camera).
-  const magicActive = magicOn && mode === "tracker" && !lockedObjectId;
+  // Magic Window (gyro) belongs ONLY to the FOV viewfinder — it must never
+  // hijack the free globe view (disorienting + fights globe gestures). It is
+  // active only while the shot planner is open, and the toggle is hidden
+  // otherwise. Leaving the FOV view resets it.
+  const fovView = fovPlannerOpen;
+  const magicActive = magicOn && fovView;
   useMagicWindow(magicActive);
+  useEffect(() => {
+    if (!fovView && magicOn) setMagicOn(false);
+  }, [fovView, magicOn]);
+
+  // A full-width bottom sheet is up — hide the bottom-anchored pill/FAB/PLAN
+  // so nothing stacks behind it.
+  const bottomSheetOpen = fovPlannerOpen || clearSkyOpen || timeMachineOpen || sheetOpen;
 
   const toggleMagic = async () => {
     if (magicOn) {
@@ -125,19 +135,22 @@ export default function MobileView(props: SkyViewProps) {
           <span className="text-sm font-bold tracking-tight text-starlight">SkyView</span>
         </span>
         <div className="flex items-center gap-1.5">
-          {/* Magic Window toggle */}
-          <button
-            onClick={toggleMagic}
-            aria-pressed={magicOn}
-            aria-label="Magic Window (device orientation)"
-            className={`grid h-9 w-9 place-items-center rounded-lg border transition-colors ${
-              magicActive
-                ? "border-zenith-cyan/60 bg-zenith-cyan/15 text-zenith-cyan"
-                : "border-grid text-stardust"
-            }`}
-          >
-            <Compass size={18} />
-          </button>
+          {/* Magic Window toggle — only in the FOV viewfinder, never in globe view */}
+          {fovView && (
+            <button
+              onClick={toggleMagic}
+              aria-pressed={magicOn}
+              aria-label="Magic Window (device orientation)"
+              className={`flex h-9 items-center gap-1.5 rounded-lg border px-2.5 transition-colors ${
+                magicActive
+                  ? "border-zenith-cyan/60 bg-zenith-cyan/15 text-zenith-cyan"
+                  : "border-grid text-stardust"
+              }`}
+            >
+              <Compass size={16} />
+              <span className="font-mono text-[10px] font-bold tracking-wider">GYRO</span>
+            </button>
+          )}
           {/* Burger → controls sheet */}
           <button
             onClick={() => setSheetOpen(true)}
@@ -152,8 +165,9 @@ export default function MobileView(props: SkyViewProps) {
       {/* lock chip (tracker) */}
       {mode === "tracker" && <LockChip lockedId={lockedObjectId} onUnlock={unlock} />}
 
-      {/* expandable telemetry pill (tracker) — bottom-left, above the nav */}
-      {mode === "tracker" && <TelemetryPill onInspect={inspectObject} />}
+      {/* expandable telemetry pill — hidden when a bottom sheet is up so they
+          don't stack at the same bottom anchor. */}
+      {mode === "tracker" && !bottomSheetOpen && <TelemetryPill onInspect={inspectObject} />}
 
       {/* shared feature overlays (retained on mobile) */}
       {mode === "tracker" && (
@@ -178,20 +192,23 @@ export default function MobileView(props: SkyViewProps) {
         </>
       )}
 
-      {/* FAB: open controls (alternative to the burger), above the nav */}
-      <button
-        onClick={() => setSheetOpen(true)}
-        aria-label="Open controls"
-        className="absolute bottom-20 right-4 z-30 grid h-13 w-13 place-items-center rounded-full
-                   border border-zenith-cyan/40 bg-zenith-cyan/15 p-3.5 text-zenith-cyan shadow-lg
-                   shadow-black/50 backdrop-blur-md active:scale-95"
-      >
-        <Crosshair size={20} />
-      </button>
+      {/* FAB: open controls (alternative to the burger). Tracker mode only,
+          and hidden while a bottom sheet occupies the same anchor. */}
+      {mode === "tracker" && !bottomSheetOpen && (
+        <button
+          onClick={() => setSheetOpen(true)}
+          aria-label="Open controls"
+          className="absolute bottom-20 right-4 z-30 grid h-13 w-13 place-items-center rounded-full
+                     border border-zenith-cyan/40 bg-zenith-cyan/15 p-3.5 text-zenith-cyan shadow-lg
+                     shadow-black/50 backdrop-blur-md active:scale-95"
+        >
+          <Crosshair size={20} />
+        </button>
+      )}
 
       {/* PLAN SHOT (mobile) when a target is locked */}
       <AnimatePresence>
-        {mode === "tracker" && lockedObjectId && !fovPlannerOpen && (
+        {mode === "tracker" && lockedObjectId && !bottomSheetOpen && (
           <motion.button
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}

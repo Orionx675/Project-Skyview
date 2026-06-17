@@ -83,9 +83,9 @@ export default function ClearSkyPlanner({ open, observer, onClose, onTrackPass }
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 40 }}
           transition={{ type: "spring", stiffness: 320, damping: 32 }}
-          className="absolute inset-x-2 bottom-2 z-30 flex max-h-[80vh] flex-col overflow-hidden rounded-2xl
+          className="absolute inset-x-2 bottom-20 z-30 flex max-h-[66vh] flex-col overflow-hidden rounded-2xl
                      border border-grid bg-panel/95 shadow-2xl shadow-black/60 backdrop-blur-md
-                     sm:inset-x-auto sm:bottom-4 sm:right-4 sm:top-4 sm:w-[26rem]"
+                     md:inset-x-auto md:bottom-4 md:right-4 md:top-4 md:max-h-none md:w-[26rem]"
           aria-label="Clear Sky stargazing planner"
         >
           {/* ------------------------------------------------- header ----- */}

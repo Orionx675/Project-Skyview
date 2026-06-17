@@ -67,10 +67,10 @@ export default function FOVPlanner({ open, targetId, observer, onClose }: FOVPla
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={relock}
-            className="absolute bottom-12 left-1/2 z-20 -translate-x-1/2 rounded-full
+            className="absolute bottom-32 left-1/2 z-30 -translate-x-1/2 rounded-full
                        border border-amber/50 bg-panel/90 px-4 py-2 font-mono text-[11px]
                        font-bold tracking-widest text-amber shadow-lg shadow-black/40
-                       backdrop-blur-md transition-colors hover:bg-amber/15"
+                       backdrop-blur-md transition-colors hover:bg-amber/15 md:bottom-12"
           >
             ⌖ RE-LOCK TARGET
           </motion.button>
@@ -84,8 +84,9 @@ export default function FOVPlanner({ open, targetId, observer, onClose }: FOVPla
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: 48 }}
           transition={{ type: "spring", stiffness: 320, damping: 32 }}
-          className="absolute right-4 top-4 z-20 w-80 overflow-hidden rounded-xl border border-grid
-                     bg-panel/90 shadow-2xl shadow-black/60 backdrop-blur-md"
+          className="scrollbar-thin absolute inset-x-2 bottom-20 z-20 max-h-[58vh] overflow-y-auto rounded-xl
+                     border border-grid bg-panel/90 shadow-2xl shadow-black/60 backdrop-blur-md
+                     md:inset-x-auto md:right-4 md:top-4 md:bottom-auto md:max-h-[calc(100vh-6rem)] md:w-80"
           aria-label="Field of view planner"
         >
           {/* ------------------------------------------------- header ----- */}

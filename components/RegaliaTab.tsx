@@ -150,8 +150,9 @@ export default function RegaliaTab({ active, observer }: { active: boolean; obse
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: -28 }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        className="absolute left-4 top-4 z-20 w-72 overflow-hidden rounded-2xl border border-grid
-                   bg-panel/90 shadow-2xl shadow-black/60 backdrop-blur-md"
+        className="scrollbar-thin absolute left-2 top-14 z-20 max-h-[42vh] w-56 overflow-y-auto rounded-2xl
+                   border border-grid bg-panel/90 shadow-2xl shadow-black/60 backdrop-blur-md
+                   md:left-4 md:top-4 md:max-h-[calc(100vh-6rem)] md:w-72 md:overflow-hidden"
         aria-label="Regalia sky layers"
       >
         <div className="flex items-center gap-2.5 border-b border-grid px-4 py-3.5">
@@ -223,8 +224,9 @@ export default function RegaliaTab({ active, observer }: { active: boolean; obse
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: 28 }}
         transition={{ type: "spring", stiffness: 320, damping: 30 }}
-        className="scrollbar-thin absolute right-4 top-4 z-20 flex max-h-[calc(100vh-6rem)] w-80
-                   flex-col gap-3 overflow-y-auto"
+        className="scrollbar-thin absolute inset-x-2 bottom-20 z-20 flex max-h-[46vh] flex-col gap-3
+                   overflow-y-auto md:inset-x-auto md:right-4 md:top-4 md:bottom-auto
+                   md:max-h-[calc(100vh-6rem)] md:w-80"
       >
         <AnimatePresence>
           {selection && (

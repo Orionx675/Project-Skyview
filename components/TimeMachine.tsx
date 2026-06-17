@@ -156,8 +156,9 @@ export default function TimeMachine({ open, onClose }: TimeMachineProps) {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 48 }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className="absolute bottom-10 left-1/2 z-30 w-[min(92vw,40rem)] -translate-x-1/2 overflow-hidden
-                     rounded-2xl border border-grid bg-panel/90 shadow-2xl shadow-black/60 backdrop-blur-md"
+          className="scrollbar-thin absolute bottom-20 left-1/2 z-30 max-h-[70vh] w-[min(94vw,40rem)]
+                     -translate-x-1/2 overflow-y-auto rounded-2xl border border-grid bg-panel/90
+                     shadow-2xl shadow-black/60 backdrop-blur-md md:bottom-10 md:max-h-none md:overflow-visible"
           aria-label="Cosmic Time Machine"
         >
           {/* header */}
