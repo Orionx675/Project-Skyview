@@ -23,6 +23,8 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Clock, Pause, Play, Radio, Rewind, FastForward, X } from "lucide-react";
 import { useViewerBridge } from "@/lib/viewerBridge";
+import { useIsMobile } from "@/hooks/useIsMobile";
+import { useSheetDrag } from "@/lib/sheetDrag";
 
 interface TimeMachineProps {
   open: boolean;
@@ -45,6 +47,8 @@ function toInputValue(d: Date): string {
 
 export default function TimeMachine({ open, onClose }: TimeMachineProps) {
   const bridge = useViewerBridge();
+  const isMobile = useIsMobile();
+  const { sheetProps, handleProps } = useSheetDrag(onClose, isMobile);
 
   const [traveling, setTraveling] = useState(false);
   const [playing, setPlaying] = useState(false);
@@ -156,11 +160,18 @@ export default function TimeMachine({ open, onClose }: TimeMachineProps) {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 48 }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className="scrollbar-thin absolute bottom-20 left-1/2 z-30 max-h-[70vh] w-[min(94vw,40rem)]
-                     -translate-x-1/2 overflow-y-auto rounded-2xl border border-grid bg-panel/90
+          {...sheetProps}
+          // Centered via auto-margins (not -translate-x-1/2) so Framer's drag
+          // transform doesn't clobber the horizontal centering.
+          className="scrollbar-thin absolute inset-x-0 bottom-20 z-30 mx-auto max-h-[70vh] w-[min(94vw,40rem)]
+                     overflow-y-auto rounded-2xl border border-grid bg-panel/90
                      shadow-2xl shadow-black/60 backdrop-blur-md md:bottom-10 md:max-h-none md:overflow-visible"
           aria-label="Cosmic Time Machine"
         >
+          {/* mobile grab handle — drag down to dismiss */}
+          <div {...handleProps} className="flex cursor-grab touch-none justify-center pt-2 active:cursor-grabbing md:hidden">
+            <span className="h-1.5 w-12 rounded-full bg-grid" />
+          </div>
           {/* header */}
           <div className="flex items-center justify-between gap-3 border-b border-grid px-4 py-2.5">
             <div className="flex items-center gap-2">

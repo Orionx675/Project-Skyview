@@ -16,6 +16,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import AnimatedNumber from "@/components/ui/AnimatedNumber";
 import { useFovPlanner } from "@/hooks/useFovPlanner";
 import { useTrackedObject } from "@/hooks/useTracker";
+import { useIsMobile } from "@/hooks/useIsMobile";
+import { useSheetDrag } from "@/lib/sheetDrag";
 import {
   DEFAULT_FOCAL_LENGTH_MM,
   DEFAULT_SENSOR,
@@ -33,6 +35,8 @@ interface FOVPlannerProps {
 }
 
 export default function FOVPlanner({ open, targetId, observer, onClose }: FOVPlannerProps) {
+  const isMobile = useIsMobile();
+  const { sheetProps, handleProps } = useSheetDrag(onClose, isMobile);
   const [focalLengthMm, setFocalLengthMm] = useState(DEFAULT_FOCAL_LENGTH_MM);
   const [sensorId, setSensorId] = useState(DEFAULT_SENSOR.id);
   const [recenterKey, setRecenterKey] = useState(0);
@@ -80,15 +84,21 @@ export default function FOVPlanner({ open, targetId, observer, onClose }: FOVPla
       <AnimatePresence>
         {open && (
           <motion.aside
-          initial={{ opacity: 0, x: 48 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: 48 }}
+          initial={isMobile ? { opacity: 0, y: 80 } : { opacity: 0, x: 48 }}
+          animate={isMobile ? { opacity: 1, y: 0 } : { opacity: 1, x: 0 }}
+          exit={isMobile ? { opacity: 0, y: 80 } : { opacity: 0, x: 48 }}
           transition={{ type: "spring", stiffness: 320, damping: 32 }}
+          {...sheetProps}
           className="scrollbar-thin absolute inset-x-2 bottom-20 z-20 max-h-[58vh] overflow-y-auto rounded-xl
                      border border-grid bg-panel/90 shadow-2xl shadow-black/60 backdrop-blur-md
                      md:inset-x-auto md:right-4 md:top-4 md:bottom-auto md:max-h-[calc(100vh-6rem)] md:w-80"
           aria-label="Field of view planner"
         >
+          {/* mobile grab handle — drag down to dismiss the sheet */}
+          <div {...handleProps} className="flex cursor-grab touch-none justify-center py-2.5 active:cursor-grabbing md:hidden">
+            <span className="h-1.5 w-12 rounded-full bg-grid" />
+          </div>
+
           {/* ------------------------------------------------- header ----- */}
           <div className="flex items-center justify-between border-b border-grid px-4 py-3">
             <h2 className="font-mono text-xs font-bold tracking-[0.2em] text-zenith-cyan">

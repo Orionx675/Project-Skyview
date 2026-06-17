@@ -206,19 +206,28 @@ export default function MobileView(props: SkyViewProps) {
         </button>
       )}
 
-      {/* PLAN SHOT (mobile) when a target is locked */}
+      {/* FOV peek tab — when a target is locked but the planner is dismissed,
+          drag this UP (or tap) to reopen the shot planner. Mirrors the
+          drag-DOWN-to-dismiss gesture on the planner sheet itself. */}
       <AnimatePresence>
         {mode === "tracker" && lockedObjectId && !bottomSheetOpen && (
           <motion.button
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 16 }}
+            drag="y"
+            dragConstraints={{ top: 0, bottom: 0 }}
+            dragElastic={{ top: 0.6, bottom: 0 }}
+            onDragEnd={(_e, info) => {
+              if (info.offset.y < -40 || info.velocity.y < -350) setFovPlannerOpen(true);
+            }}
             onClick={() => setFovPlannerOpen(true)}
-            className="absolute bottom-36 right-4 z-30 rounded-full border border-aurora/50 bg-panel/90
-                       px-3 py-2 font-mono text-[10px] font-bold tracking-widest text-aurora
-                       shadow-lg shadow-black/40 backdrop-blur-md active:scale-95"
+            aria-label="Open FOV planner"
+            className="absolute inset-x-0 bottom-32 z-30 mx-auto flex w-max touch-none cursor-grab items-center
+                       gap-1.5 rounded-full border border-aurora/50 bg-panel/90 px-4 py-2 font-mono text-[10px]
+                       font-bold tracking-widest text-aurora shadow-lg shadow-black/40 backdrop-blur-md active:cursor-grabbing"
           >
-            ◱ PLAN
+            <ChevronUp size={13} /> ◱ FOV PLANNER
           </motion.button>
         )}
       </AnimatePresence>

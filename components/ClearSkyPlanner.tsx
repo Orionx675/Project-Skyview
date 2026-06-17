@@ -31,6 +31,8 @@ import {
   X,
 } from "lucide-react";
 import { useClearSky } from "@/hooks/useClearSky";
+import { useIsMobile } from "@/hooks/useIsMobile";
+import { useSheetDrag } from "@/lib/sheetDrag";
 import { goldenDarkWindows, selectBestWindows, type SkyQuality, type SkyWindow } from "@/lib/clearSky";
 import type { Observer } from "@/lib/layers";
 
@@ -69,6 +71,8 @@ const QUALITY_STYLE: Record<
 
 export default function ClearSkyPlanner({ open, observer, onClose, onTrackPass }: ClearSkyPlannerProps) {
   const { loading, error, windows, hasSatellites, fetchedAt } = useClearSky(observer, open);
+  const isMobile = useIsMobile();
+  const { sheetProps, handleProps } = useSheetDrag(onClose, isMobile);
 
   // Headline reflects ALL windows (e.g. total golden count); the list shows
   // only the most watchable handful so it stays scannable.
@@ -83,11 +87,17 @@ export default function ClearSkyPlanner({ open, observer, onClose, onTrackPass }
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 40 }}
           transition={{ type: "spring", stiffness: 320, damping: 32 }}
+          {...sheetProps}
           className="absolute inset-x-2 bottom-20 z-30 flex max-h-[66vh] flex-col overflow-hidden rounded-2xl
                      border border-grid bg-panel/95 shadow-2xl shadow-black/60 backdrop-blur-md
                      md:inset-x-auto md:bottom-4 md:right-4 md:top-4 md:max-h-none md:w-[26rem]"
           aria-label="Clear Sky stargazing planner"
         >
+          {/* mobile grab handle — drag down to dismiss */}
+          <div {...handleProps} className="flex shrink-0 cursor-grab touch-none justify-center pt-2.5 active:cursor-grabbing md:hidden">
+            <span className="h-1.5 w-12 rounded-full bg-grid" />
+          </div>
+
           {/* ------------------------------------------------- header ----- */}
           <div className="flex items-start justify-between gap-3 border-b border-grid px-5 py-4">
             <div className="flex items-center gap-2.5">
