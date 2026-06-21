@@ -11,6 +11,7 @@
 
 import { useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { Lock, ArrowUpRight, Sparkles } from "lucide-react";
 import AnimatedNumber from "@/components/ui/AnimatedNumber";
 import { useTrackerSnapshot } from "@/hooks/useTracker";
 import { azimuthToCompass } from "@/utils/orbitalMath";
@@ -39,7 +40,7 @@ export default function TelemetryPanel({
 
   if (!focus) {
     return (
-      <div className="rounded-xl border border-grid bg-panel/85 p-4 backdrop-blur-md">
+      <div className="glass rounded-xl p-4">
         <p className="font-mono text-xs text-faint">AWAITING TELEMETRY…</p>
       </div>
     );
@@ -53,7 +54,7 @@ export default function TelemetryPanel({
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
-      className="w-72 overflow-hidden rounded-xl border border-grid bg-panel/85 shadow-2xl shadow-black/50 backdrop-blur-md"
+      className="glass w-72 overflow-hidden rounded-xl"
     >
       {/* Header cross-fades when the focus target itself changes */}
       <div className="flex items-center justify-between border-b border-grid px-4 py-3">
@@ -68,8 +69,8 @@ export default function TelemetryPanel({
           >
             <span className="truncate">{focus.name}</span>
             {lockedId === focus.id && (
-              <span className="shrink-0 rounded bg-zenith-cyan/15 px-1.5 py-0.5 text-[9px] font-bold tracking-wider text-zenith-cyan">
-                ◉ LOCK
+              <span className="flex shrink-0 items-center gap-1 rounded bg-zenith-cyan/15 px-1.5 py-0.5 text-[9px] font-bold tracking-wider text-zenith-cyan">
+                <Lock size={9} /> LOCK
               </span>
             )}
           </motion.h3>
@@ -112,21 +113,21 @@ export default function TelemetryPanel({
             exit={{ height: 0, opacity: 0 }}
             className="overflow-hidden border-t border-grid"
           >
-            <p className="px-4 py-2 text-center font-mono text-[11px] font-semibold tracking-widest text-signal">
-              ★ PASSING THROUGH YOUR ZENITH ★
+            <p className="flex items-center justify-center gap-1.5 px-4 py-2 text-center font-mono text-[11px] font-semibold tracking-widest text-signal">
+              <Sparkles size={11} /> PASSING THROUGH YOUR ZENITH <Sparkles size={11} />
             </p>
           </motion.div>
         )}
       </AnimatePresence>
 
       <motion.button
-        whileHover={{ backgroundColor: "rgba(45, 212, 255, 0.12)" }}
+        whileHover={{ backgroundColor: "rgba(56, 217, 255, 0.12)" }}
         whileTap={{ scale: 0.98 }}
         onClick={() => onInspect(focus.id)}
-        className="w-full border-t border-grid px-4 py-2 font-mono text-[11px] font-semibold
-                   uppercase tracking-widest text-zenith-cyan"
+        className="focus-ring flex w-full items-center justify-center gap-1.5 border-t border-grid px-4 py-2
+                   font-mono text-[11px] font-semibold uppercase tracking-widest text-zenith-cyan"
       >
-        Inspect object ↗
+        Inspect object <ArrowUpRight size={13} />
       </motion.button>
     </motion.div>
   );

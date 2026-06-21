@@ -8,6 +8,7 @@
 
 "use client";
 
+import { AlertTriangle } from "lucide-react";
 import { useTrackerSnapshot } from "@/hooks/useTracker";
 
 export default function HeaderStats() {
@@ -16,8 +17,8 @@ export default function HeaderStats() {
   return (
     <div className="ml-auto flex items-center gap-4 font-mono text-xs text-stardust">
       {error && (
-        <span className="rounded bg-alert/15 px-2 py-1 text-alert" role="alert">
-          ⚠ {error}
+        <span className="flex items-center gap-1 rounded bg-alert/15 px-2 py-1 text-alert" role="alert">
+          <AlertTriangle size={12} /> {error}
         </span>
       )}
       <span className="hidden md:inline">

@@ -18,6 +18,7 @@
 
 import { useEffect } from "react";
 import { motion, useReducedMotion } from "framer-motion";
+import { ChevronRight, Check } from "lucide-react";
 
 const TITLE = "PROJECT SKYVIEW";
 const BOOT_LINES = [
@@ -118,7 +119,7 @@ export default function IntroOverlay({ onComplete }: { onComplete: () => void })
 
       {/* ----------------------------- wordmark ---------------------------- */}
       <h1
-        className="flex text-3xl font-bold tracking-[0.18em] text-starlight sm:text-4xl"
+        className="flex font-display text-3xl font-bold tracking-[0.18em] text-starlight sm:text-4xl"
         style={{ perspective: 600 }}
       >
         {TITLE.split("").map((ch, i) => (
@@ -151,7 +152,7 @@ export default function IntroOverlay({ onComplete }: { onComplete: () => void })
             transition={{ delay: 1.15 + i * 0.42, duration: 0.25 }}
             className="flex items-center gap-2 text-stardust"
           >
-            <span className="text-zenith-cyan">▸</span>
+            <ChevronRight size={11} className="shrink-0 text-zenith-cyan" />
             {line}
             <motion.span
               initial={{ opacity: 0, scale: 0.5 }}
@@ -159,7 +160,7 @@ export default function IntroOverlay({ onComplete }: { onComplete: () => void })
               transition={{ delay: 1.45 + i * 0.42, type: "spring", stiffness: 500, damping: 22 }}
               className="text-signal"
             >
-              ✓
+              <Check size={12} />
             </motion.span>
           </motion.p>
         ))}

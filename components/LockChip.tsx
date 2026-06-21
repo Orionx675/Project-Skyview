@@ -10,6 +10,7 @@
 
 import { useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { X } from "lucide-react";
 import { useTrackedObject } from "@/hooks/useTracker";
 
 export default function LockChip({
@@ -34,8 +35,8 @@ export default function LockChip({
           exit={{ opacity: 0, y: -16, scale: 0.92 }}
           transition={{ type: "spring", stiffness: 420, damping: 30 }}
           className="absolute left-1/2 top-16 z-20 flex -translate-x-1/2 items-center gap-2 rounded-full
-                     border border-zenith-cyan/40 bg-panel/90 py-1.5 pl-3 pr-1.5 shadow-lg
-                     shadow-black/40 backdrop-blur-md md:top-4"
+                     border border-zenith-cyan/40 bg-void/80 py-1.5 pl-3 pr-1.5 shadow-panel
+                     backdrop-blur-xl md:top-4"
         >
           <span className="pulse-live h-1.5 w-1.5 rounded-full bg-zenith-cyan" />
           <span className="font-mono text-[11px] font-semibold tracking-wider text-zenith-cyan">
@@ -45,10 +46,10 @@ export default function LockChip({
           <button
             onClick={onUnlock}
             aria-label="Release target lock"
-            className="rounded-full bg-grid/60 px-2 py-0.5 font-mono text-[10px] text-stardust
+            className="focus-ring grid h-5 w-5 place-items-center rounded-full bg-grid/60 text-stardust
                        transition-colors hover:bg-alert/20 hover:text-alert"
           >
-            ✕
+            <X size={12} />
           </button>
         </motion.div>
       )}

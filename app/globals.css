@@ -1,66 +1,156 @@
 /* ===========================================================================
-   app/globals.css — Project Zenith design system (Tailwind CSS v4)
+   app/globals.css — Project SkyView design system (Tailwind CSS v4)
    ===========================================================================
    Tailwind v4 is configured here, not in tailwind.config.js. The @theme block
    defines design tokens which Tailwind turns into utilities automatically:
    --color-zenith-cyan  ->  bg-zenith-cyan / text-zenith-cyan / border-…
 
-   Palette philosophy: "mission control at night". A near-black blue void,
-   ultra-light starlight text (WCAG AAA contrast on the void), and three
-   instrument accents — radar cyan, aurora violet, signal green.
+   Palette philosophy: "Modern Aerospace & Deep Space" — a SpaceX mission-
+   control HUD crossed with a premium planetarium. A true pitch-black/midnight-
+   blue void, ultra-light starlight text (WCAG AAA on the void), and electric
+   instrument accents. Surfaces are *glass*: the live Cesium globe and stars
+   bleed softly through every panel via backdrop-blur.
+
+   Two themes share one token set:
+   · default — deep-space blue/cyan HUD
+   · html.night-vision — astrophotographer red-light mode (one class flips
+     every token; the 3D globe stays full-colour).
    ======================================================================== */
 
 @import "tailwindcss";
 
 @theme {
   /* --- Surfaces (darkest -> lightest) --------------------------------- */
-  --color-void: #04060f;        /* page background: deep-space blue-black  */
-  --color-panel: #0a0f1f;       /* cards / sidebar                         */
-  --color-panel-raised: #111831;/* hover & raised surfaces                 */
-  --color-grid: #1c2747;        /* hairline borders, dividers              */
+  --color-void: #02040c;        /* page background: pitch midnight-blue     */
+  --color-panel: #0a1020;       /* cards / sidebar (glass base)             */
+  --color-panel-raised: #131c3a;/* hover & raised surfaces                  */
+  --color-grid: #243156;        /* hairline borders, dividers               */
 
   /* --- Text ------------------------------------------------------------ */
   --color-starlight: #eef2ff;   /* primary text  (~16:1 on void)           */
-  --color-stardust: #97a3c4;    /* secondary text (~7:1 on void)           */
-  --color-faint: #5a6790;       /* tertiary / disabled                     */
+  --color-stardust: #9fabcc;    /* secondary text (~7:1 on void)           */
+  --color-faint: #5f6d96;       /* tertiary / disabled                     */
 
   /* --- Instrument accents ---------------------------------------------- */
-  --color-zenith-cyan: #2dd4ff; /* primary accent: radar / live data       */
-  --color-aurora: #a78bfa;      /* secondary accent: violet                */
+  --color-zenith-cyan: #38d9ff; /* primary accent: radar / live data       */
+  --color-aurora: #b39bff;      /* secondary accent: violet                */
   --color-signal: #34d399;      /* positive / "above horizon"              */
   --color-amber: #fbbf24;       /* caution / GPS layer                     */
   --color-alert: #fb7185;       /* errors / below horizon                  */
 
+  /* --- Elevation scale (8pt rhythm) ------------------------------------ */
+  --shadow-panel: 0 18px 48px -16px rgb(0 0 0 / 0.7);
+  --shadow-float: 0 28px 70px -20px rgb(0 0 0 / 0.82);
+
   /* --- Typography (wired to next/font variables in layout.tsx) --------- */
-  --font-display: var(--font-space-grotesk), system-ui, sans-serif;
-  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+  --font-display: var(--font-space-grotesk), system-ui, sans-serif; /* headings */
+  --font-sans: var(--font-inter), system-ui, sans-serif;            /* UI body  */
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace; /* telemetry */
 }
 
 /* --- Base ---------------------------------------------------------------- */
+html {
+  color-scheme: dark;
+}
 html,
 body {
   height: 100%;
   background: var(--color-void);
   color: var(--color-starlight);
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   /* Crisp numerals that don't jitter as telemetry updates every second. */
   font-feature-settings: "tnum" 1;
 }
 
-/* Subtle starfield: two layered radial glows + noise-free dot grid keeps the
-   empty regions of the dashboard from feeling flat, at zero image cost. */
+/* Aerospace deep-space backdrop: layered instrument glows over the void,
+   keeping the empty regions of the dashboard from feeling flat at zero
+   image cost. */
 body {
   background-image:
-    radial-gradient(ellipse 80% 50% at 70% -10%, rgb(45 212 255 / 0.08), transparent),
-    radial-gradient(ellipse 60% 40% at 10% 110%, rgb(167 139 250 / 0.07), transparent);
+    radial-gradient(ellipse 90% 55% at 72% -12%, rgb(56 217 255 / 0.10), transparent 70%),
+    radial-gradient(ellipse 65% 45% at 8% 112%, rgb(179 155 255 / 0.09), transparent 70%),
+    radial-gradient(ellipse 120% 80% at 50% 50%, rgb(8 14 34 / 0.4), transparent 80%);
   background-attachment: fixed;
+}
+
+/* Smooth cross-fade when the Night Vision token set flips — premium, not a
+   snap. Scoped to colour properties so it never fights framer-motion
+   transforms; disabled for reduced-motion users. */
+@media (prefers-reduced-motion: no-preference) {
+  body * {
+    transition-property: background-color, border-color, color, fill, stroke;
+    transition-duration: 300ms;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+/* --- Night Vision: one class repaints every token deep red --------------- */
+/* `html.night-vision` (specificity 0,1,1) overrides the :root @theme tokens,
+   so all token-based text/accents/borders/surfaces shift to red-on-black —
+   preserving dark-adapted vision for astrophotographers. Data-layer marker
+   hexes (lib/layers.ts) and the Cesium globe are intentionally left full
+   colour. */
+html.night-vision {
+  --color-void: #080202;
+  --color-panel: #190606;
+  --color-panel-raised: #2a0a0a;
+  --color-grid: #45161688;
+  --color-starlight: #ffdcdc;
+  --color-stardust: #e09b95;
+  --color-faint: #a85a52;
+  --color-zenith-cyan: #ff5a4d;
+  --color-aurora: #ff8a78;
+  --color-signal: #ff7a64;
+  --color-amber: #ff9d5a;
+  --color-alert: #ff4040;
+}
+html.night-vision body {
+  background-image:
+    radial-gradient(ellipse 90% 55% at 72% -12%, rgb(255 90 77 / 0.10), transparent 70%),
+    radial-gradient(ellipse 65% 45% at 8% 112%, rgb(255 90 77 / 0.07), transparent 70%);
 }
 
 /* --- Custom utilities ------------------------------------------------------ */
 
+/* Frosted instrument glass — the globe + stars bleed softly through. Used by
+   every floating panel/card so blur, hairline, inner highlight and elevation
+   stay consistent across the app. */
+@utility glass {
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.045), rgb(255 255 255 / 0.012)),
+    color-mix(in srgb, var(--color-panel) 80%, transparent);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid color-mix(in srgb, var(--color-grid) 85%, transparent);
+  box-shadow:
+    inset 0 1px 0 0 rgb(255 255 255 / 0.06),
+    var(--shadow-panel);
+}
+
+/* Higher-opacity glass for modals & bottom sheets where legibility leads. */
+@utility glass-raised {
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.06), rgb(255 255 255 / 0.015)),
+    color-mix(in srgb, var(--color-panel) 92%, transparent);
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  border: 1px solid var(--color-grid);
+  box-shadow:
+    inset 0 1px 0 0 rgb(255 255 255 / 0.07),
+    var(--shadow-float);
+}
+
+/* Visible keyboard focus ring (a11y priority #1). */
+@utility focus-ring {
+  &:focus-visible {
+    outline: 2px solid var(--color-zenith-cyan);
+    outline-offset: 2px;
+  }
+}
+
 /* Soft cyan glow for live elements (the "this is real-time" affordance). */
 @utility glow-cyan {
-  box-shadow: 0 0 12px rgb(45 212 255 / 0.35), 0 0 2px rgb(45 212 255 / 0.6);
+  box-shadow: 0 0 14px rgb(56 217 255 / 0.38), 0 0 2px rgb(56 217 255 / 0.6);
 }
 
 /* Pulsing dot used by the LIVE badge and active layer indicators. */
@@ -94,7 +184,7 @@ body {
 
 /* Soft edge falloff over the 3D stage — pulls focus to the globe. */
 .globe-vignette {
-  background: radial-gradient(ellipse at center, transparent 52%, rgb(4 6 15 / 0.65) 100%);
+  background: radial-gradient(ellipse at center, transparent 52%, rgb(2 4 12 / 0.7) 100%);
 }
 
 /* --- Cesium chrome overrides ---------------------------------------------- */

@@ -29,7 +29,7 @@ export default function ToggleSwitch({ checked, color, disabled, label, onChange
       aria-label={label}
       disabled={disabled}
       onClick={onChange}
-      className="flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full p-0.5
+      className="focus-ring flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full p-0.5
                  transition-colors duration-300 disabled:cursor-not-allowed disabled:opacity-40"
       style={{
         backgroundColor: checked ? color : "var(--color-grid)",

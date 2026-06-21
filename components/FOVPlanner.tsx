@@ -13,6 +13,7 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { Crosshair, Frame, X } from "lucide-react";
 import AnimatedNumber from "@/components/ui/AnimatedNumber";
 import { useFovPlanner } from "@/hooks/useFovPlanner";
 import { useTrackedObject } from "@/hooks/useTracker";
@@ -71,12 +72,12 @@ export default function FOVPlanner({ open, targetId, observer, onClose }: FOVPla
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={relock}
-            className="absolute bottom-32 left-1/2 z-30 -translate-x-1/2 rounded-full
-                       border border-amber/50 bg-panel/90 px-4 py-2 font-mono text-[11px]
-                       font-bold tracking-widest text-amber shadow-lg shadow-black/40
-                       backdrop-blur-md transition-colors hover:bg-amber/15 md:bottom-12"
+            className="focus-ring absolute bottom-32 left-1/2 z-30 flex -translate-x-1/2 items-center gap-1.5
+                       rounded-full border border-amber/50 bg-void/85 px-4 py-2 font-mono text-[11px]
+                       font-bold tracking-widest text-amber shadow-panel backdrop-blur-xl
+                       transition-colors hover:bg-amber/15 md:bottom-12"
           >
-            ⌖ RE-LOCK TARGET
+            <Crosshair size={13} /> RE-LOCK TARGET
           </motion.button>
         )}
       </AnimatePresence>
@@ -89,8 +90,7 @@ export default function FOVPlanner({ open, targetId, observer, onClose }: FOVPla
           exit={isMobile ? { opacity: 0, y: 80 } : { opacity: 0, x: 48 }}
           transition={{ type: "spring", stiffness: 320, damping: 32 }}
           {...sheetProps}
-          className="scrollbar-thin absolute inset-x-2 bottom-20 z-20 max-h-[58vh] overflow-y-auto rounded-xl
-                     border border-grid bg-panel/90 shadow-2xl shadow-black/60 backdrop-blur-md
+          className="glass-raised scrollbar-thin absolute inset-x-2 bottom-20 z-20 max-h-[58vh] overflow-y-auto rounded-xl
                      md:inset-x-auto md:right-4 md:top-4 md:bottom-auto md:max-h-[calc(100vh-6rem)] md:w-80"
           aria-label="Field of view planner"
         >
@@ -101,15 +101,15 @@ export default function FOVPlanner({ open, targetId, observer, onClose }: FOVPla
 
           {/* ------------------------------------------------- header ----- */}
           <div className="flex items-center justify-between border-b border-grid px-4 py-3">
-            <h2 className="font-mono text-xs font-bold tracking-[0.2em] text-zenith-cyan">
-              ◱ FOV PLANNER
+            <h2 className="flex items-center gap-1.5 font-mono text-xs font-bold tracking-[0.2em] text-zenith-cyan">
+              <Frame size={13} /> FOV PLANNER
             </h2>
             <button
               onClick={onClose}
               aria-label="Close FOV planner"
-              className="rounded p-1 text-stardust transition-colors hover:bg-panel-raised hover:text-starlight"
+              className="focus-ring rounded p-1 text-stardust transition-colors hover:bg-panel-raised hover:text-starlight"
             >
-              ✕
+              <X size={15} />
             </button>
           </div>
 
@@ -241,16 +241,16 @@ export default function FOVPlanner({ open, targetId, observer, onClose }: FOVPla
                 <motion.button
                   whileTap={{ scale: 0.96 }}
                   onClick={relock}
-                  className="flex-1 rounded-lg border border-zenith-cyan/40 bg-zenith-cyan/10 px-3 py-2
-                             text-[10px] font-semibold uppercase tracking-wider text-zenith-cyan
-                             transition-colors hover:bg-zenith-cyan/20"
+                  className="focus-ring flex flex-1 items-center justify-center gap-1.5 rounded-lg border
+                             border-zenith-cyan/40 bg-zenith-cyan/10 px-3 py-2 text-[10px] font-semibold
+                             uppercase tracking-wider text-zenith-cyan transition-colors hover:bg-zenith-cyan/20"
                 >
-                  ⌖ Re-lock on target
+                  <Crosshair size={13} /> Re-lock on target
                 </motion.button>
                 <motion.button
                   whileTap={{ scale: 0.96 }}
                   onClick={onClose}
-                  className="rounded-lg border border-grid px-3 py-2 text-[10px] font-semibold
+                  className="focus-ring rounded-lg border border-grid px-3 py-2 text-[10px] font-semibold
                              uppercase tracking-wider text-stardust transition-colors hover:bg-panel-raised"
                 >
                   Exit

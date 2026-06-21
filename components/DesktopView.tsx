@@ -10,8 +10,9 @@
 
 import dynamic from "next/dynamic";
 import { AnimatePresence, motion } from "framer-motion";
-import { Clock, Telescope } from "lucide-react";
+import { Clock, Telescope, Sparkles, Frame } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
+import NightVisionToggle from "@/components/NightVisionToggle";
 import TelemetryPanel from "@/components/TelemetryPanel";
 import HeaderStats from "@/components/HeaderStats";
 import ObjectModal from "@/components/ObjectModal";
@@ -70,11 +71,11 @@ export default function DesktopView(props: SkyViewProps) {
       <motion.header
         {...enter(0.05)}
         animate={introDone ? { opacity: 1, y: 0 } : {}}
-        className="flex h-14 shrink-0 items-center gap-3 border-b border-grid bg-panel/80 px-4 backdrop-blur-sm"
+        className="flex h-14 shrink-0 items-center gap-3 border-b border-grid/80 bg-void/65 px-4 backdrop-blur-xl shadow-[0_8px_24px_-16px_rgba(0,0,0,0.9)]"
       >
         <h1 className="flex items-baseline gap-2">
-          <span className="text-base font-bold tracking-tight text-starlight">PROJECT&nbsp;SKYVIEW</span>
-          <span className="hidden text-[11px] uppercase tracking-[0.25em] text-stardust lg:inline">
+          <span className="font-display text-base font-bold tracking-tight text-starlight">PROJECT&nbsp;SKYVIEW</span>
+          <span className="hidden font-display text-[11px] uppercase tracking-[0.25em] text-stardust lg:inline">
             The Celestial Eye
           </span>
         </h1>
@@ -86,25 +87,33 @@ export default function DesktopView(props: SkyViewProps) {
           </span>
         )}
 
-        {/* Mode tabs: Tracker ⇄ Regalia */}
+        {/* Mode tabs: Tracker ⇄ Regalia — the active pill glides between them */}
         <div className="flex shrink-0 items-center rounded-full border border-grid bg-void/50 p-0.5">
-          {(["tracker", "regalia"] as const).map((m) => (
-            <button
-              key={m}
-              onClick={() => setMode(m)}
-              aria-pressed={mode === m}
-              className={`rounded-full px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-widest
-                transition-colors ${
-                  mode === m
-                    ? m === "regalia"
-                      ? "bg-aurora/20 text-aurora"
-                      : "bg-zenith-cyan/20 text-zenith-cyan"
+          {(["tracker", "regalia"] as const).map((m) => {
+            const activeM = mode === m;
+            return (
+              <button
+                key={m}
+                onClick={() => setMode(m)}
+                aria-pressed={activeM}
+                className={`focus-ring relative z-0 flex items-center gap-1 rounded-full px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-widest transition-colors ${
+                  activeM
+                    ? m === "regalia" ? "text-aurora" : "text-zenith-cyan"
                     : "text-stardust hover:text-starlight"
                 }`}
-            >
-              {m === "regalia" ? "✦ Regalia" : "Tracker"}
-            </button>
-          ))}
+              >
+                {activeM && (
+                  <motion.span
+                    layoutId="mode-tab-pill"
+                    transition={{ type: "spring", stiffness: 420, damping: 34 }}
+                    className={`absolute inset-0 -z-10 rounded-full ${m === "regalia" ? "bg-aurora/20" : "bg-zenith-cyan/20"}`}
+                  />
+                )}
+                {m === "regalia" && <Sparkles size={11} />}
+                {m === "regalia" ? "Regalia" : "Tracker"}
+              </button>
+            );
+          })}
         </div>
 
         {mode === "tracker" && (
@@ -118,11 +127,11 @@ export default function DesktopView(props: SkyViewProps) {
               whileTap={{ scale: 0.96 }}
               onClick={() => setTimeMachineOpen(!timeMachineOpen)}
               aria-pressed={timeMachineOpen}
-              className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 font-mono
+              className={`focus-ring flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 font-mono
                 text-[10px] font-bold tracking-widest transition-colors
                 ${
                   timeMachineOpen
-                    ? "border-aurora/60 bg-aurora/15 text-aurora"
+                    ? "border-aurora/60 bg-aurora/15 text-aurora shadow-[0_0_16px_rgba(179,155,255,0.3)]"
                     : "border-grid text-stardust hover:bg-panel-raised hover:text-starlight"
                 }`}
             >
@@ -138,11 +147,11 @@ export default function DesktopView(props: SkyViewProps) {
                 setClearSkyOpen(!clearSkyOpen);
               }}
               aria-pressed={clearSkyOpen}
-              className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 font-mono
+              className={`focus-ring flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 font-mono
                 text-[10px] font-bold tracking-widest transition-colors
                 ${
                   clearSkyOpen
-                    ? "border-zenith-cyan/60 bg-zenith-cyan/15 text-zenith-cyan"
+                    ? "border-zenith-cyan/60 bg-zenith-cyan/15 text-zenith-cyan shadow-[0_0_16px_rgba(56,217,255,0.3)]"
                     : "border-grid text-stardust hover:bg-panel-raised hover:text-starlight"
                 }`}
             >
@@ -151,13 +160,17 @@ export default function DesktopView(props: SkyViewProps) {
             </motion.button>
 
             <HeaderStats />
+            <NightVisionToggle className="h-8 w-8 rounded-full" />
           </>
         )}
 
         {mode === "regalia" && (
-          <span className="ml-auto font-mono text-[10px] uppercase tracking-[0.25em] text-aurora/70">
-            Eyes of Stars
-          </span>
+          <div className="ml-auto flex items-center gap-3">
+            <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-aurora/70">
+              Eyes of Stars
+            </span>
+            <NightVisionToggle className="h-8 w-8 rounded-full" />
+          </div>
         )}
       </motion.header>
 
@@ -241,12 +254,12 @@ export default function DesktopView(props: SkyViewProps) {
                 whileHover={{ scale: 1.04 }}
                 whileTap={{ scale: 0.96 }}
                 onClick={() => setFovPlannerOpen(true)}
-                className="absolute bottom-10 right-4 z-10 rounded-full border border-zenith-cyan/40
-                           bg-panel/90 px-4 py-2.5 font-mono text-[11px] font-bold tracking-widest
-                           text-zenith-cyan shadow-lg shadow-black/40 backdrop-blur-md
-                           transition-colors hover:bg-zenith-cyan/15"
+                className="focus-ring absolute bottom-10 right-4 z-10 flex items-center gap-1.5 rounded-full
+                           border border-zenith-cyan/40 bg-void/80 px-4 py-2.5 font-mono text-[11px] font-bold
+                           tracking-widest text-zenith-cyan shadow-panel backdrop-blur-xl
+                           transition-colors hover:bg-zenith-cyan/15 hover:shadow-[0_0_20px_rgba(56,217,255,0.4)]"
               >
-                ◱ PLAN SHOT
+                <Frame size={13} /> PLAN SHOT
               </motion.button>
             )}
           </AnimatePresence>

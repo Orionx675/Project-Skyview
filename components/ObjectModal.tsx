@@ -12,6 +12,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
+import { X, Lock } from "lucide-react";
 import Modal from "@/components/ui/Modal";
 import AnimatedNumber from "@/components/ui/AnimatedNumber";
 import { useTracker, useTrackedObject } from "@/hooks/useTracker";
@@ -127,16 +128,18 @@ export default function ObjectModal({
                   </span>
                 )}
                 {isLocked && (
-                  <span className="rounded bg-zenith-cyan/15 px-1.5 py-0.5 text-zenith-cyan">◉ LOCKED</span>
+                  <span className="flex items-center gap-1 rounded bg-zenith-cyan/15 px-1.5 py-0.5 text-zenith-cyan">
+                    <Lock size={9} /> LOCKED
+                  </span>
                 )}
               </div>
             </div>
             <button
               onClick={onClose}
               aria-label="Close dialog"
-              className="rounded-lg p-1.5 text-stardust transition-colors hover:bg-panel-raised hover:text-starlight"
+              className="focus-ring rounded-lg p-1.5 text-stardust transition-colors hover:bg-panel-raised hover:text-starlight"
             >
-              ✕
+              <X size={16} />
             </button>
           </div>
 
@@ -150,15 +153,15 @@ export default function ObjectModal({
               whileTap={{ scale: 0.98 }}
               disabled={isLocked}
               onClick={() => objectId && onTargetLock(objectId)}
-              className={`flex w-full items-center justify-center gap-2 rounded-lg border px-4 py-2.5
+              className={`focus-ring flex w-full items-center justify-center gap-2 rounded-lg border px-4 py-2.5
                 font-mono text-xs font-bold uppercase tracking-widest transition-colors
                 ${
                   isLocked
                     ? "cursor-default border-zenith-cyan/30 bg-zenith-cyan/5 text-zenith-cyan/70"
-                    : "border-zenith-cyan/50 bg-zenith-cyan/10 text-zenith-cyan hover:bg-zenith-cyan/20"
+                    : "border-zenith-cyan/50 bg-zenith-cyan/10 text-zenith-cyan hover:bg-zenith-cyan/20 hover:shadow-[0_0_18px_rgba(56,217,255,0.3)]"
                 }`}
             >
-              {isLocked ? "◉ Tracking this target" : "◉ Lock on to target"}
+              <Lock size={13} /> {isLocked ? "Tracking this target" : "Lock on to target"}
             </motion.button>
 
             {/* ---------------------------------------------- live sky now --- */}

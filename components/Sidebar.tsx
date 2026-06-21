@@ -10,6 +10,7 @@
 
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { X, Crosshair, LocateFixed } from "lucide-react";
 import ToggleSwitch from "@/components/ui/ToggleSwitch";
 import { useTrackerSnapshot } from "@/hooks/useTracker";
 import { DATA_LAYERS, type Observer } from "@/lib/layers";
@@ -76,7 +77,7 @@ export default function Sidebar({
   };
 
   return (
-    <aside className="flex h-full w-72 shrink-0 flex-col border-r border-grid bg-panel/90 backdrop-blur-md">
+    <aside className="flex h-full w-72 shrink-0 flex-col border-r border-grid bg-panel/85 backdrop-blur-xl">
       {/* ------------------------------------------------ observer block --- */}
       <section className="border-b border-grid p-4">
         <div className="mb-3 flex items-center justify-between">
@@ -87,9 +88,9 @@ export default function Sidebar({
             <button
               onClick={onClose}
               aria-label="Close panel"
-              className="rounded p-1 text-stardust transition-colors hover:bg-panel-raised hover:text-starlight"
+              className="focus-ring rounded p-1 text-stardust transition-colors hover:bg-panel-raised hover:text-starlight"
             >
-              ✕
+              <X size={15} />
             </button>
           )}
         </div>
@@ -134,11 +135,12 @@ export default function Sidebar({
             whileHover={{ scale: valid ? 1.015 : 1 }}
             whileTap={{ scale: valid ? 0.97 : 1 }}
             disabled={!valid}
-            className="mt-2.5 w-full rounded border border-zenith-cyan/40 bg-zenith-cyan/10 px-3 py-1.5
-                       font-mono text-[11px] font-semibold uppercase tracking-wider text-zenith-cyan
-                       transition-colors hover:bg-zenith-cyan/20 disabled:cursor-not-allowed disabled:opacity-40"
+            className="focus-ring mt-2.5 flex w-full items-center justify-center gap-1.5 rounded border
+                       border-zenith-cyan/40 bg-zenith-cyan/10 px-3 py-1.5 font-mono text-[11px] font-semibold
+                       uppercase tracking-wider text-zenith-cyan transition-colors hover:bg-zenith-cyan/20
+                       disabled:cursor-not-allowed disabled:opacity-40"
           >
-            ⌖ Go to coordinates
+            <Crosshair size={13} /> Go to coordinates
           </motion.button>
 
           {!valid && (
@@ -156,11 +158,11 @@ export default function Sidebar({
           whileTap={{ scale: 0.97 }}
           onClick={onUseMyLocation}
           disabled={locating}
-          className="mt-3 w-full rounded-lg border border-grid bg-panel-raised/40 px-3 py-2
-                     text-xs font-semibold uppercase tracking-wider text-stardust
+          className="focus-ring mt-3 flex w-full items-center justify-center gap-1.5 rounded-lg border border-grid
+                     bg-panel-raised/40 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-stardust
                      transition-colors hover:bg-panel-raised hover:text-starlight disabled:cursor-wait disabled:opacity-50"
         >
-          {locating ? "Acquiring fix…" : "◎ Use my location"}
+          <LocateFixed size={13} /> {locating ? "Acquiring fix…" : "Use my location"}
         </motion.button>
 
         <p className="mt-2 text-[11px] leading-relaxed text-faint">

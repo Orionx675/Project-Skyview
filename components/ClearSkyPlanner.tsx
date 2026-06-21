@@ -88,8 +88,7 @@ export default function ClearSkyPlanner({ open, observer, onClose, onTrackPass }
           exit={{ opacity: 0, y: 40 }}
           transition={{ type: "spring", stiffness: 320, damping: 32 }}
           {...sheetProps}
-          className="absolute inset-x-2 bottom-20 z-30 flex max-h-[66vh] flex-col overflow-hidden rounded-2xl
-                     border border-grid bg-panel/95 shadow-2xl shadow-black/60 backdrop-blur-md
+          className="glass-raised absolute inset-x-2 bottom-20 z-30 flex max-h-[66vh] flex-col overflow-hidden rounded-2xl
                      md:inset-x-auto md:bottom-4 md:right-4 md:top-4 md:max-h-none md:w-[26rem]"
           aria-label="Clear Sky stargazing planner"
         >
@@ -112,7 +111,7 @@ export default function ClearSkyPlanner({ open, observer, onClose, onTrackPass }
             <button
               onClick={onClose}
               aria-label="Close Clear Sky planner"
-              className="rounded-lg p-1.5 text-stardust transition-colors hover:bg-panel-raised hover:text-starlight"
+              className="focus-ring rounded-lg p-1.5 text-stardust transition-colors hover:bg-panel-raised hover:text-starlight"
             >
               <X size={16} />
             </button>

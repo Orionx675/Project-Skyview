@@ -150,8 +150,7 @@ export default function RegaliaTab({ active, observer }: { active: boolean; obse
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: -28 }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        className="scrollbar-thin absolute left-2 top-14 z-20 max-h-[42vh] w-56 overflow-y-auto rounded-2xl
-                   border border-grid bg-panel/90 shadow-2xl shadow-black/60 backdrop-blur-md
+        className="glass scrollbar-thin absolute left-2 top-14 z-20 max-h-[42vh] w-56 overflow-y-auto rounded-2xl
                    md:left-4 md:top-4 md:max-h-[calc(100vh-6rem)] md:w-72 md:overflow-hidden"
         aria-label="Regalia sky layers"
       >
@@ -236,7 +235,7 @@ export default function RegaliaTab({ active, observer }: { active: boolean; obse
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -12 }}
               transition={{ type: "spring", stiffness: 360, damping: 30 }}
-              className="overflow-hidden rounded-2xl border border-grid bg-panel/90 shadow-2xl shadow-black/60 backdrop-blur-md"
+              className="glass overflow-hidden rounded-2xl"
               aria-label="Object inspector"
             >
               {selection.kind === "star" ? (
@@ -287,7 +286,7 @@ function Viewfinder({
 }) {
   return (
     <section
-      className="overflow-hidden rounded-2xl border border-grid bg-panel/90 shadow-2xl shadow-black/60 backdrop-blur-md"
+      className="glass overflow-hidden rounded-2xl"
       aria-label="FOV viewfinder"
     >
       <div className="flex items-center gap-2 border-b border-grid px-4 py-3">
@@ -417,7 +416,7 @@ function InspectorHeader({
       <button
         onClick={onClose}
         aria-label="Close inspector"
-        className="rounded-lg p-1.5 text-stardust transition-colors hover:bg-panel-raised hover:text-starlight"
+        className="focus-ring rounded-lg p-1.5 text-stardust transition-colors hover:bg-panel-raised hover:text-starlight"
       >
         <X size={16} />
       </button>

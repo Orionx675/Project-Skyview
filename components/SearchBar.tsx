@@ -22,6 +22,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { Search } from "lucide-react";
 import { useTrackerSnapshot } from "@/hooks/useTracker";
 import { DATA_LAYERS, type TrackedObject } from "@/lib/layers";
 
@@ -137,9 +138,10 @@ export default function SearchBar({ onTargetLock }: { onTargetLock: (id: string)
       {/* ------------------------------------------------------ input ----- */}
       <div
         className="flex items-center gap-2 rounded-lg border border-grid bg-void/60 px-3 py-1.5
-                   transition-colors focus-within:border-zenith-cyan/60 focus-within:bg-void/80"
+                   transition-colors focus-within:border-zenith-cyan/60 focus-within:bg-void/80
+                   focus-within:shadow-[0_0_16px_rgba(56,217,255,0.18)]"
       >
-        <span className="text-faint" aria-hidden>⌖</span>
+        <Search size={14} className="shrink-0 text-faint" aria-hidden />
         <input
           ref={inputRef}
           value={query}
@@ -173,8 +175,7 @@ export default function SearchBar({ onTargetLock }: { onTargetLock: (id: string)
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -6, scale: 0.985 }}
             transition={{ type: "spring", stiffness: 480, damping: 34 }}
-            className="absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden rounded-xl
-                       border border-grid bg-panel/95 shadow-2xl shadow-black/60 backdrop-blur-md"
+            className="glass absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden rounded-xl"
           >
             {/* Mode header: tells browsers what they're looking at */}
             <li className="border-b border-grid px-3 py-1.5 font-mono text-[9px] font-semibold uppercase tracking-[0.18em] text-faint">

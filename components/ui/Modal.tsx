@@ -39,9 +39,9 @@ export default function Modal({ open, onClose, labelledBy, children }: ModalProp
           exit={{ opacity: 0 }}
           transition={{ duration: 0.18 }}
         >
-          {/* Click-away backdrop */}
+          {/* Click-away backdrop (blur signals the panel is dismissible) */}
           <div
-            className="absolute inset-0 bg-void/75 backdrop-blur-sm"
+            className="absolute inset-0 bg-void/80 backdrop-blur-md"
             onClick={onClose}
             aria-hidden
           />
@@ -54,8 +54,7 @@ export default function Modal({ open, onClose, labelledBy, children }: ModalProp
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97, y: 12 }}
             transition={{ type: "spring", stiffness: 380, damping: 32 }}
-            className="relative max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl
-                       border border-grid bg-panel shadow-2xl shadow-black/60 scrollbar-thin"
+            className="glass-raised scrollbar-thin relative max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl"
           >
             {children}
           </motion.div>

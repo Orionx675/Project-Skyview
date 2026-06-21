@@ -3,12 +3,13 @@
 // =============================================================================
 // Fonts are loaded through next/font so they're self-hosted, zero-CLS and
 // exposed as CSS variables that the Tailwind theme (globals.css) consumes:
-//   Space Grotesk — display face: geometric, slightly technical, very "space"
-//   IBM Plex Mono — telemetry face: tabular digits for live readouts
+//   Space Grotesk — display face: geometric headings + wordmark, very "space"
+//   Inter         — UI face: clean neutral sans for all general interface text
+//   JetBrains Mono — telemetry face: tabular digits for coordinates & readouts
 // =============================================================================
 
 import type { Metadata, Viewport } from "next";
-import { Space_Grotesk, IBM_Plex_Mono } from "next/font/google";
+import { Space_Grotesk, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -17,10 +18,16 @@ const spaceGrotesk = Space_Grotesk({
   display: "swap",
 });
 
-const plexMono = IBM_Plex_Mono({
+const inter = Inter({
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  variable: "--font-plex-mono",
+  variable: "--font-inter",
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-jetbrains-mono",
   display: "swap",
 });
 
@@ -51,12 +58,12 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#04060f",
+  themeColor: "#02040c",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${spaceGrotesk.variable} ${plexMono.variable}`}>
+    <html lang="en" className={`${spaceGrotesk.variable} ${inter.variable} ${jetbrainsMono.variable}`}>
       {/* antialiased + overflow-hidden: the dashboard is a fixed full-viewport
           instrument panel, not a scrolling document.
           suppressHydrationWarning: browser extensions (Grammarly, etc.) inject

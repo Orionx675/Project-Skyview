@@ -163,9 +163,8 @@ export default function TimeMachine({ open, onClose }: TimeMachineProps) {
           {...sheetProps}
           // Centered via auto-margins (not -translate-x-1/2) so Framer's drag
           // transform doesn't clobber the horizontal centering.
-          className="scrollbar-thin absolute inset-x-0 bottom-20 z-30 mx-auto max-h-[70vh] w-[min(94vw,40rem)]
-                     overflow-y-auto rounded-2xl border border-grid bg-panel/90
-                     shadow-2xl shadow-black/60 backdrop-blur-md md:bottom-10 md:max-h-none md:overflow-visible"
+          className="glass-raised scrollbar-thin absolute inset-x-0 bottom-20 z-30 mx-auto max-h-[70vh] w-[min(94vw,40rem)]
+                     overflow-y-auto rounded-2xl md:bottom-10 md:max-h-none md:overflow-visible"
           aria-label="Cosmic Time Machine"
         >
           {/* mobile grab handle — drag down to dismiss */}
@@ -187,7 +186,7 @@ export default function TimeMachine({ open, onClose }: TimeMachineProps) {
             <button
               onClick={onClose}
               aria-label="Close time machine"
-              className="rounded-lg p-1.5 text-stardust transition-colors hover:bg-panel-raised hover:text-starlight"
+              className="focus-ring rounded-lg p-1.5 text-stardust transition-colors hover:bg-panel-raised hover:text-starlight"
             >
               <X size={16} />
             </button>

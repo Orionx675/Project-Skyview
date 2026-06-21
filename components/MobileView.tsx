@@ -25,8 +25,12 @@ import {
   Telescope,
   ChevronUp,
   Crosshair,
+  Frame,
+  ArrowUpRight,
+  LocateFixed,
 } from "lucide-react";
 import GlobeFallback from "@/components/GlobeFallback";
+import NightVisionToggle from "@/components/NightVisionToggle";
 import LockChip from "@/components/LockChip";
 import RegaliaTab from "@/components/RegaliaTab";
 import ObjectModal from "@/components/ObjectModal";
@@ -129,19 +133,20 @@ export default function MobileView(props: SkyViewProps) {
       <RegaliaTab active={mode === "regalia"} observer={observer} />
 
       {/* ===================== condensed header ===================== */}
-      <header className="absolute inset-x-0 top-0 z-30 flex h-12 items-center justify-between gap-2 border-b border-grid bg-panel/80 px-3 backdrop-blur-md">
+      <header className="absolute inset-x-0 top-0 z-30 flex h-12 items-center justify-between gap-2 border-b border-grid/80 bg-void/70 px-3 backdrop-blur-xl">
         <span className="flex items-center gap-1.5">
           <span className="pulse-live h-1.5 w-1.5 rounded-full bg-signal" />
-          <span className="text-sm font-bold tracking-tight text-starlight">SkyView</span>
+          <span className="font-display text-sm font-bold tracking-tight text-starlight">SkyView</span>
         </span>
         <div className="flex items-center gap-1.5">
           {/* Magic Window toggle — only in the FOV viewfinder, never in globe view */}
           {fovView && (
-            <button
+            <motion.button
+              whileTap={{ scale: 0.94 }}
               onClick={toggleMagic}
               aria-pressed={magicOn}
               aria-label="Magic Window (device orientation)"
-              className={`flex h-9 items-center gap-1.5 rounded-lg border px-2.5 transition-colors ${
+              className={`focus-ring flex h-9 items-center gap-1.5 rounded-lg border px-2.5 transition-colors ${
                 magicActive
                   ? "border-zenith-cyan/60 bg-zenith-cyan/15 text-zenith-cyan"
                   : "border-grid text-stardust"
@@ -149,16 +154,19 @@ export default function MobileView(props: SkyViewProps) {
             >
               <Compass size={16} />
               <span className="font-mono text-[10px] font-bold tracking-wider">GYRO</span>
-            </button>
+            </motion.button>
           )}
+          {/* Night Vision — astrophotographer red light */}
+          <NightVisionToggle className="h-9 w-9 rounded-lg" />
           {/* Burger → controls sheet */}
-          <button
+          <motion.button
+            whileTap={{ scale: 0.94 }}
             onClick={() => setSheetOpen(true)}
             aria-label="Open controls"
-            className="grid h-9 w-9 place-items-center rounded-lg border border-grid text-starlight active:bg-panel-raised"
+            className="focus-ring grid h-9 w-9 place-items-center rounded-lg border border-grid text-starlight active:bg-panel-raised"
           >
             <Menu size={18} />
-          </button>
+          </motion.button>
         </div>
       </header>
 
@@ -195,15 +203,16 @@ export default function MobileView(props: SkyViewProps) {
       {/* FAB: open controls (alternative to the burger). Tracker mode only,
           and hidden while a bottom sheet occupies the same anchor. */}
       {mode === "tracker" && !bottomSheetOpen && (
-        <button
+        <motion.button
+          whileTap={{ scale: 0.92 }}
           onClick={() => setSheetOpen(true)}
           aria-label="Open controls"
-          className="absolute bottom-20 right-4 z-30 grid h-13 w-13 place-items-center rounded-full
-                     border border-zenith-cyan/40 bg-zenith-cyan/15 p-3.5 text-zenith-cyan shadow-lg
-                     shadow-black/50 backdrop-blur-md active:scale-95"
+          className="focus-ring absolute bottom-20 right-4 z-30 grid h-14 w-14 place-items-center rounded-full
+                     border border-zenith-cyan/50 bg-zenith-cyan/15 text-zenith-cyan shadow-panel
+                     backdrop-blur-xl transition-shadow hover:shadow-[0_0_22px_rgba(56,217,255,0.45)]"
         >
-          <Crosshair size={20} />
-        </button>
+          <Crosshair size={22} />
+        </motion.button>
       )}
 
       {/* FOV peek tab — when a target is locked but the planner is dismissed,
@@ -223,11 +232,11 @@ export default function MobileView(props: SkyViewProps) {
             }}
             onClick={() => setFovPlannerOpen(true)}
             aria-label="Open FOV planner"
-            className="absolute inset-x-0 bottom-32 z-30 mx-auto flex w-max touch-none cursor-grab items-center
-                       gap-1.5 rounded-full border border-aurora/50 bg-panel/90 px-4 py-2 font-mono text-[10px]
-                       font-bold tracking-widest text-aurora shadow-lg shadow-black/40 backdrop-blur-md active:cursor-grabbing"
+            className="focus-ring absolute inset-x-0 bottom-32 z-30 mx-auto flex w-max touch-none cursor-grab items-center
+                       gap-1.5 rounded-full border border-aurora/50 bg-void/85 px-4 py-2 font-mono text-[10px]
+                       font-bold tracking-widest text-aurora shadow-panel backdrop-blur-xl active:cursor-grabbing"
           >
-            <ChevronUp size={13} /> ◱ FOV PLANNER
+            <ChevronUp size={13} /> <Frame size={12} /> FOV PLANNER
           </motion.button>
         )}
       </AnimatePresence>
@@ -250,7 +259,7 @@ export default function MobileView(props: SkyViewProps) {
       />
 
       {/* ===================== sticky bottom navigation ===================== */}
-      <nav className="absolute inset-x-0 bottom-0 z-30 grid h-16 grid-cols-3 border-t border-grid bg-panel/90 backdrop-blur-md">
+      <nav className="absolute inset-x-0 bottom-0 z-30 grid h-16 grid-cols-3 border-t border-grid/80 bg-void/75 backdrop-blur-xl">
         <NavTab
           label="Tracker"
           active={mode === "tracker"}
@@ -301,15 +310,29 @@ function NavTab({
   Icon: typeof Clock;
 }) {
   return (
-    <button
+    <motion.button
+      whileTap={{ scale: 0.94 }}
       onClick={onClick}
       aria-pressed={active}
-      className="flex flex-col items-center justify-center gap-1 transition-colors active:bg-panel-raised"
+      className="focus-ring relative flex flex-col items-center justify-center gap-1 transition-colors active:bg-panel-raised"
       style={{ color: active ? accent : "var(--color-stardust)" }}
     >
-      <Icon size={20} />
+      {/* animated active indicator — springs in along the top edge */}
+      <AnimatePresence>
+        {active && (
+          <motion.span
+            initial={{ opacity: 0, scaleX: 0 }}
+            animate={{ opacity: 1, scaleX: 1 }}
+            exit={{ opacity: 0, scaleX: 0 }}
+            transition={{ type: "spring", stiffness: 420, damping: 32 }}
+            className="absolute top-0 h-0.5 w-8 rounded-full"
+            style={{ background: accent, boxShadow: `0 0 10px ${accent}` }}
+          />
+        )}
+      </AnimatePresence>
+      <Icon size={20} style={active ? { filter: `drop-shadow(0 0 6px ${accent})` } : undefined} />
       <span className="font-mono text-[10px] font-semibold uppercase tracking-wider">{label}</span>
-    </button>
+    </motion.button>
   );
 }
 
@@ -334,7 +357,7 @@ function TelemetryPill({ onInspect }: { onInspect: (id: string) => void }) {
       <motion.button
         layout
         onClick={() => setExpanded((v) => !v)}
-        className="w-full overflow-hidden rounded-2xl border border-grid bg-panel/90 text-left shadow-lg shadow-black/40 backdrop-blur-md"
+        className="glass focus-ring w-full overflow-hidden rounded-2xl text-left"
       >
         {/* collapsed pill row */}
         <div className="flex items-center gap-2 px-3 py-2">
@@ -371,9 +394,9 @@ function TelemetryPill({ onInspect }: { onInspect: (id: string) => void }) {
                   e.stopPropagation();
                   onInspect(focus.id);
                 }}
-                className="w-full bg-panel py-2 font-mono text-[10px] font-bold uppercase tracking-widest text-zenith-cyan"
+                className="flex w-full items-center justify-center gap-1 bg-panel/60 py-2 font-mono text-[10px] font-bold uppercase tracking-widest text-zenith-cyan active:bg-panel-raised"
               >
-                Inspect ↗
+                Inspect <ArrowUpRight size={12} />
               </button>
             </motion.div>
           )}
@@ -449,8 +472,8 @@ function ControlsSheet({
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", stiffness: 360, damping: 36 }}
-            className="scrollbar-thin absolute inset-x-0 bottom-0 max-h-[85vh] overflow-y-auto rounded-t-3xl
-                       border-t border-grid bg-panel/95 pb-8 backdrop-blur-md"
+            className="glass-raised scrollbar-thin absolute inset-x-0 bottom-0 max-h-[85vh] overflow-y-auto
+                       rounded-t-3xl pb-8"
           >
             {/* drag handle + header */}
             <div className="sticky top-0 z-10 bg-panel/95 px-5 pt-3 backdrop-blur">
@@ -511,19 +534,20 @@ function ControlsSheet({
                         onClose();
                       }
                     }}
-                    className="h-12 rounded-xl border border-zenith-cyan/40 bg-zenith-cyan/10 font-mono
-                               text-xs font-bold uppercase tracking-wider text-zenith-cyan
-                               active:bg-zenith-cyan/20 disabled:opacity-40"
+                    className="focus-ring flex h-12 items-center justify-center gap-1.5 rounded-xl border
+                               border-zenith-cyan/40 bg-zenith-cyan/10 font-mono text-xs font-bold uppercase
+                               tracking-wider text-zenith-cyan active:bg-zenith-cyan/20 disabled:opacity-40"
                   >
-                    ⌖ Go
+                    <Crosshair size={14} /> Go
                   </button>
                   <button
                     disabled={locating}
                     onClick={useMyLocation}
-                    className="h-12 rounded-xl border border-grid font-mono text-xs font-bold uppercase
-                               tracking-wider text-stardust active:bg-panel-raised disabled:opacity-50"
+                    className="focus-ring flex h-12 items-center justify-center gap-1.5 rounded-xl border
+                               border-grid font-mono text-xs font-bold uppercase tracking-wider text-stardust
+                               active:bg-panel-raised disabled:opacity-50"
                   >
-                    {locating ? "Locating…" : "◎ My location"}
+                    <LocateFixed size={14} /> {locating ? "Locating…" : "My location"}
                   </button>
                 </div>
                 {observer.label && (
