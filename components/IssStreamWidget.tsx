@@ -25,7 +25,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useDragControls } from "framer-motion";
-import { GripHorizontal, Minus, X, Moon, Radio, VideoOff, RefreshCw } from "lucide-react";
+import { GripHorizontal, Minus, X, Moon, Radio, VideoOff, RefreshCw, ExternalLink } from "lucide-react";
 import { useTracker } from "@/hooks/useTracker";
 import { useViewerBridge } from "@/lib/viewerBridge";
 import { useIsMobile } from "@/hooks/useIsMobile";
@@ -37,10 +37,18 @@ const ISS_NORAD_ID = "25544";
 /** Eclipse re-check cadence (ms). The shadow boundary moves slowly. */
 const ECLIPSE_POLL_MS = 4000;
 
-/** NASA's live ISS feed (HDEV is retired). Overridable at build time. */
+// NASA's live ISS feed (HDEV is retired). We embed a SPECIFIC, verified-
+// embeddable video id rather than the deprecated `live_stream?channel=` form,
+// which resolves to "Video unavailable". `uwXgcTc8oY8` is NASA's official
+// "Live Video from the International Space Station" stream. Both the video id
+// and the full embed URL are overridable at build time, and known-good 24/7
+// alternates (if NASA's feed is between passes) are `vytmBNhc9ig` / `r-TPJDQSqv0`.
+const ISS_VIDEO_ID = process.env.NEXT_PUBLIC_ISS_STREAM_ID ?? "uwXgcTc8oY8";
 const ISS_STREAM_URL =
   process.env.NEXT_PUBLIC_ISS_STREAM_URL ??
-  "https://www.youtube.com/embed/live_stream?channel=UCLA_DiR1FfKNvjuUpBHmylQ&autoplay=1&mute=1";
+  `https://www.youtube.com/embed/${ISS_VIDEO_ID}?autoplay=1&mute=1&playsinline=1&rel=0`;
+/** Pop-out link — a reliable escape hatch if the embed ever shows offline. */
+const ISS_WATCH_URL = `https://www.youtube.com/watch?v=${ISS_VIDEO_ID}`;
 
 export default function IssStreamWidget({ objectId }: { objectId: string | null }) {
   const tracker = useTracker();
@@ -223,15 +231,27 @@ export default function IssStreamWidget({ objectId }: { objectId: string | null 
                   <p className="text-[11px] leading-relaxed text-stardust">
                     The live feed couldn&apos;t load right now.
                   </p>
-                  <button
-                    type="button"
-                    onClick={() => setIframeError(false)}
-                    className="focus-ring flex items-center gap-1.5 rounded-lg border border-grid px-3 py-1.5
-                               font-mono text-[10px] font-bold uppercase tracking-wider text-zenith-cyan
-                               transition-colors hover:bg-zenith-cyan/15"
-                  >
-                    <RefreshCw size={12} /> Retry
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIframeError(false)}
+                      className="focus-ring flex items-center gap-1.5 rounded-lg border border-grid px-3 py-1.5
+                                 font-mono text-[10px] font-bold uppercase tracking-wider text-zenith-cyan
+                                 transition-colors hover:bg-zenith-cyan/15"
+                    >
+                      <RefreshCw size={12} /> Retry
+                    </button>
+                    <a
+                      href={ISS_WATCH_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="focus-ring flex items-center gap-1.5 rounded-lg border border-grid px-3 py-1.5
+                                 font-mono text-[10px] font-bold uppercase tracking-wider text-stardust
+                                 transition-colors hover:bg-panel-raised hover:text-starlight"
+                    >
+                      <ExternalLink size={12} /> YouTube
+                    </a>
+                  </div>
                 </div>
               )}
             </div>
@@ -239,7 +259,14 @@ export default function IssStreamWidget({ objectId }: { objectId: string | null 
             {/* caption strip */}
             <div className="flex items-center justify-between px-3 py-1.5 font-mono text-[9px] uppercase
                             tracking-wider text-faint">
-              <span>NASA live · Earth from ISS</span>
+              <a
+                href={ISS_WATCH_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="focus-ring flex items-center gap-1 rounded transition-colors hover:text-stardust"
+              >
+                NASA live <ExternalLink size={9} />
+              </a>
               <span className={eclipsed ? "text-aurora" : "text-signal"}>
                 {eclipsed ? "Orbital night" : "Daylit pass"}
               </span>
