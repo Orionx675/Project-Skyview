@@ -8,7 +8,7 @@
 
 import type { Observer } from "@/lib/layers";
 
-export type AppMode = "tracker" | "regalia";
+export type AppMode = "tracker" | "about";
 
 export interface SkyViewProps {
   // ---- state ----

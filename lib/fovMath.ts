@@ -86,8 +86,7 @@ export function limitingMagnitude(sensor: SensorPreset, focalLengthMm: number): 
 }
 
 /** Equatorial coordinates → unit Vec3 in the inertial frame (x → vernal
- *  equinox, z → north celestial pole). The frame-math sibling of
- *  starCatalog.raDecToCartesian, but Cesium-free for in-frame tests. */
+ *  equinox, z → north celestial pole). Cesium-free, for in-frame tests. */
 export function equatorialUnitVec3(raDeg: number, decDeg: number): Vec3 {
   const ra = raDeg * DEG2RAD;
   const dec = decDeg * DEG2RAD;

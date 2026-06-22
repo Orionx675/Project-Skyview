@@ -89,9 +89,6 @@ interface CesiumGlobeProps {
   /** True while another feature (FOV planner) owns the camera — the lock
    *  releases trackedEntity and stands down until this clears. */
   cameraSuppressed?: boolean;
-  /** "Regalia" planetarium mode: hides tracker entities + Cesium sky chrome
-   *  and frames the celestial sphere; Regalia owns clicks (star picking). */
-  regaliaActive?: boolean;
   onSelectLocation?: (latitude: number, longitude: number) => void;
   /** Fired when the user clicks an object marker on the globe. */
   onInspectObject?: (objectId: string) => void;
@@ -169,7 +166,6 @@ export default function CesiumGlobe({
   selectedObjectId,
   trackedObjectId = null,
   cameraSuppressed = false,
-  regaliaActive = false,
   onSelectLocation,
   onInspectObject,
 }: CesiumGlobeProps) {
@@ -199,8 +195,6 @@ export default function CesiumGlobe({
   onSelectRef.current = onSelectLocation;
   const onInspectRef = useRef(onInspectObject);
   onInspectRef.current = onInspectObject;
-  const regaliaActiveRef = useRef(regaliaActive);
-  regaliaActiveRef.current = regaliaActive;
 
   // -----------------------------------------------------------------------
   // Entity construction (runs only when catalogVersion changes)
@@ -500,27 +494,6 @@ export default function CesiumGlobe({
     });
   }
 
-  /**
-   * Frame the celestial sphere for Regalia mode: a vantage INSIDE the star
-   * dome (camera nearer than the sphere) with Earth floating ahead, so stars
-   * surround the view like a planetarium.
-   */
-  function flyToSky(durationSeconds: number) {
-    const Cesium = cesiumRef.current;
-    const viewer = viewerRef.current;
-    if (!Cesium || !viewer || viewer.isDestroyed()) return;
-    const dest = new Cesium.Cartesian3(0, -7e7, 2.5e7);
-    const direction = Cesium.Cartesian3.normalize(
-      Cesium.Cartesian3.negate(dest, new Cesium.Cartesian3()),
-      new Cesium.Cartesian3()
-    );
-    viewer.camera.flyTo({
-      destination: dest,
-      orientation: { direction, up: Cesium.Cartesian3.UNIT_Z },
-      duration: durationSeconds,
-    });
-  }
-
   // -----------------------------------------------------------------------
   // Viewer lifecycle
   // -----------------------------------------------------------------------
@@ -590,8 +563,6 @@ export default function CesiumGlobe({
       // the observer ("select any geographic coordinate on Earth").
       viewer.screenSpaceEventHandler.setInputAction(
         (movement: { position: { x: number; y: number } }) => {
-          // In Regalia mode the planetarium owns clicks (star/DSO picking).
-          if (regaliaActiveRef.current) return;
           const windowPos = new Cesium.Cartesian2(movement.position.x, movement.position.y);
           const picked = viewer.scene.pick(windowPos);
           if (
@@ -734,27 +705,6 @@ export default function CesiumGlobe({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trackedObjectId, cameraSuppressed]);
-
-  // Regalia (planetarium) mode: hide the tracker's entities and Cesium's own
-  // sky chrome so the catalog stars are authoritative, then frame the dome.
-  // Reverses cleanly back to the tracker view when it turns off.
-  useEffect(() => {
-    const Cesium = cesiumRef.current;
-    const viewer = viewerRef.current;
-    if (!Cesium || !viewer || viewer.isDestroyed()) return;
-    const scene = viewer.scene;
-
-    // One switch hides every tracker entity (satellites, observer, trail…);
-    // the Regalia star primitives live in scene.primitives, so they stay.
-    viewer.entities.show = !regaliaActive;
-    if (scene.skyBox) scene.skyBox.show = !regaliaActive; // Cesium's stock stars
-    if (scene.skyAtmosphere) scene.skyAtmosphere.show = !regaliaActive; // blue glow
-    if (scene.sun) scene.sun.show = !regaliaActive; // sun glare would blind stars
-
-    if (regaliaActive) flyToSky(2.2);
-    else flyToObserver(1.8);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [regaliaActive]);
 
   return (
     <div

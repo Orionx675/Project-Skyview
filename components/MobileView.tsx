@@ -2,7 +2,7 @@
 // components/MobileView.tsx — mobile-first UI (< 768px)
 // =============================================================================
 // A completely separate, touch-optimized shell that reuses the SAME engine and
-// feature components as desktop (CesiumGlobe, RegaliaTab, ObjectModal, the
+// feature components as desktop (CesiumGlobe, AboutPanel, ObjectModal, the
 // planners, TimeMachine). The whole screen is the globe; controls live in a
 // bottom sheet, navigation in a sticky bottom bar, and telemetry in an
 // expandable pill — so persistent chrome is minimal. Includes a DeviceOrientation
@@ -19,7 +19,7 @@ import {
   X,
   Compass,
   SatelliteDish,
-  Sparkles,
+  Info,
   Clock,
   MapPin,
   Telescope,
@@ -33,7 +33,7 @@ import GlobeFallback from "@/components/GlobeFallback";
 import NightVisionToggle from "@/components/NightVisionToggle";
 import AuroraLayer from "@/components/AuroraLayer";
 import LockChip from "@/components/LockChip";
-import RegaliaTab from "@/components/RegaliaTab";
+import AboutPanel from "@/components/AboutPanel";
 import ObjectModal from "@/components/ObjectModal";
 import FOVPlanner from "@/components/FOVPlanner";
 import ClearSkyPlanner from "@/components/ClearSkyPlanner";
@@ -129,7 +129,6 @@ export default function MobileView(props: SkyViewProps) {
         selectedObjectId={focusObjectId}
         trackedObjectId={lockedObjectId}
         cameraSuppressed={fovPlannerOpen}
-        regaliaActive={mode === "regalia"}
         onSelectLocation={selectLocation}
         onInspectObject={inspectObject}
       />
@@ -137,8 +136,8 @@ export default function MobileView(props: SkyViewProps) {
       {/* Procedural auroral-oval rings, scaled by live Kp index. */}
       <AuroraLayer />
 
-      {/* Regalia planetarium overlay (panels render themselves) */}
-      <RegaliaTab active={mode === "regalia"} observer={observer} />
+      {/* About / feature guide overlay (globe keeps turning behind it). */}
+      <AboutPanel active={mode === "about"} onClose={() => setMode("tracker")} />
 
       {/* ===================== condensed header ===================== */}
       <header
@@ -279,11 +278,11 @@ export default function MobileView(props: SkyViewProps) {
           Icon={SatelliteDish}
         />
         <NavTab
-          label="Regalia"
-          active={mode === "regalia"}
+          label="About"
+          active={mode === "about"}
           accent="#a78bfa"
-          onClick={() => setMode("regalia")}
-          Icon={Sparkles}
+          onClick={() => setMode("about")}
+          Icon={Info}
         />
         <NavTab
           label="Time"

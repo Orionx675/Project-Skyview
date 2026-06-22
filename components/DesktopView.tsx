@@ -10,7 +10,7 @@
 
 import dynamic from "next/dynamic";
 import { AnimatePresence, motion } from "framer-motion";
-import { Clock, Telescope, Sparkles, Frame } from "lucide-react";
+import { Clock, Telescope, Info, Frame } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import NightVisionToggle from "@/components/NightVisionToggle";
 import TelemetryPanel from "@/components/TelemetryPanel";
@@ -20,7 +20,7 @@ import SearchBar from "@/components/SearchBar";
 import FOVPlanner from "@/components/FOVPlanner";
 import ClearSkyPlanner from "@/components/ClearSkyPlanner";
 import LocationCallout from "@/components/LocationCallout";
-import RegaliaTab from "@/components/RegaliaTab";
+import AboutPanel from "@/components/AboutPanel";
 import TimeMachine from "@/components/TimeMachine";
 import LockChip from "@/components/LockChip";
 import GlobeFallback from "@/components/GlobeFallback";
@@ -92,9 +92,9 @@ export default function DesktopView(props: SkyViewProps) {
           </span>
         )}
 
-        {/* Mode tabs: Tracker ⇄ Regalia — the active pill glides between them */}
+        {/* Mode tabs: Tracker ⇄ About — the active pill glides between them */}
         <div className="flex shrink-0 items-center rounded-full border border-grid bg-void/50 p-0.5">
-          {(["tracker", "regalia"] as const).map((m) => {
+          {(["tracker", "about"] as const).map((m) => {
             const activeM = mode === m;
             return (
               <button
@@ -103,7 +103,7 @@ export default function DesktopView(props: SkyViewProps) {
                 aria-pressed={activeM}
                 className={`focus-ring relative z-0 flex items-center gap-1 rounded-full px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-widest transition-colors ${
                   activeM
-                    ? m === "regalia" ? "text-aurora" : "text-zenith-cyan"
+                    ? m === "about" ? "text-aurora" : "text-zenith-cyan"
                     : "text-stardust hover:text-starlight"
                 }`}
               >
@@ -111,11 +111,11 @@ export default function DesktopView(props: SkyViewProps) {
                   <motion.span
                     layoutId="mode-tab-pill"
                     transition={{ type: "spring", stiffness: 420, damping: 34 }}
-                    className={`absolute inset-0 -z-10 rounded-full ${m === "regalia" ? "bg-aurora/20" : "bg-zenith-cyan/20"}`}
+                    className={`absolute inset-0 -z-10 rounded-full ${m === "about" ? "bg-aurora/20" : "bg-zenith-cyan/20"}`}
                   />
                 )}
-                {m === "regalia" && <Sparkles size={11} />}
-                {m === "regalia" ? "Regalia" : "Tracker"}
+                {m === "about" && <Info size={11} />}
+                {m === "about" ? "About" : "Tracker"}
               </button>
             );
           })}
@@ -169,10 +169,10 @@ export default function DesktopView(props: SkyViewProps) {
           </>
         )}
 
-        {mode === "regalia" && (
+        {mode === "about" && (
           <div className="ml-auto flex items-center gap-3">
             <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-aurora/70">
-              Eyes of Stars
+              Feature Guide
             </span>
             <NightVisionToggle className="h-8 w-8 rounded-full" />
           </div>
@@ -207,7 +207,6 @@ export default function DesktopView(props: SkyViewProps) {
             selectedObjectId={focusObjectId}
             trackedObjectId={lockedObjectId}
             cameraSuppressed={fovPlannerOpen}
-            regaliaActive={mode === "regalia"}
             onSelectLocation={selectLocation}
             onInspectObject={inspectObject}
           />
@@ -215,7 +214,8 @@ export default function DesktopView(props: SkyViewProps) {
           {/* Procedural auroral-oval rings, scaled by live Kp index. */}
           <AuroraLayer />
 
-          <RegaliaTab active={mode === "regalia"} observer={observer} />
+          {/* About / feature guide overlay (globe keeps turning behind it). */}
+          <AboutPanel active={mode === "about"} onClose={() => setMode("tracker")} />
 
           {/* HUD dressing: edge vignette + corner brackets */}
           <div className="globe-vignette pointer-events-none absolute inset-0 z-[5]" />
