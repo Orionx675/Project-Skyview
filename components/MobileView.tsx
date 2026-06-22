@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import GlobeFallback from "@/components/GlobeFallback";
 import NightVisionToggle from "@/components/NightVisionToggle";
+import AuroraLayer from "@/components/AuroraLayer";
 import LockChip from "@/components/LockChip";
 import RegaliaTab from "@/components/RegaliaTab";
 import ObjectModal from "@/components/ObjectModal";
@@ -41,6 +42,7 @@ import TimeMachine from "@/components/TimeMachine";
 import SearchBar from "@/components/SearchBar";
 import ToggleSwitch from "@/components/ui/ToggleSwitch";
 import { useTrackerSnapshot } from "@/hooks/useTracker";
+import { useSpaceWeather } from "@/hooks/useSpaceWeather";
 import { useViewerBridge } from "@/lib/viewerBridge";
 import { azimuthToCompass } from "@/utils/orbitalMath";
 import { DATA_LAYERS, type Observer } from "@/lib/layers";
@@ -81,6 +83,9 @@ export default function MobileView(props: SkyViewProps) {
 
   const [sheetOpen, setSheetOpen] = useState(false);
   const [magicOn, setMagicOn] = useState(false);
+
+  // Slide the header down when the geomagnetic-storm banner occupies the top.
+  const { severe } = useSpaceWeather();
 
   // Magic Window (gyro) belongs ONLY to the FOV viewfinder — it must never
   // hijack the free globe view (disorienting + fights globe gestures). It is
@@ -129,11 +134,17 @@ export default function MobileView(props: SkyViewProps) {
         onInspectObject={inspectObject}
       />
 
+      {/* Procedural auroral-oval rings, scaled by live Kp index. */}
+      <AuroraLayer />
+
       {/* Regalia planetarium overlay (panels render themselves) */}
       <RegaliaTab active={mode === "regalia"} observer={observer} />
 
       {/* ===================== condensed header ===================== */}
-      <header className="absolute inset-x-0 top-0 z-30 flex h-12 items-center justify-between gap-2 border-b border-grid/80 bg-void/70 px-3 backdrop-blur-xl">
+      <header
+        style={{ top: severe ? "2.25rem" : undefined }}
+        className="absolute inset-x-0 top-0 z-30 flex h-12 items-center justify-between gap-2 border-b border-grid/80 bg-void/70 px-3 backdrop-blur-xl"
+      >
         <span className="flex items-center gap-1.5">
           <span className="pulse-live h-1.5 w-1.5 rounded-full bg-signal" />
           <span className="font-display text-sm font-bold tracking-tight text-starlight">SkyView</span>
@@ -354,13 +365,13 @@ function TelemetryPill({ onInspect }: { onInspect: (id: string) => void }) {
 
   return (
     <div className="absolute bottom-20 left-3 z-30 w-56">
-      <motion.button
-        layout
-        onClick={() => setExpanded((v) => !v)}
-        className="glass focus-ring w-full overflow-hidden rounded-2xl text-left"
-      >
-        {/* collapsed pill row */}
-        <div className="flex items-center gap-2 px-3 py-2">
+      <motion.div layout className="glass w-full overflow-hidden rounded-2xl text-left">
+        {/* collapsed pill row — toggles the expanded readout */}
+        <button
+          onClick={() => setExpanded((v) => !v)}
+          aria-expanded={expanded}
+          className="focus-ring flex w-full items-center gap-2 px-3 py-2 text-left"
+        >
           <span
             className={`h-1.5 w-1.5 shrink-0 rounded-full ${focus.aboveHorizon ? "bg-signal" : "bg-alert"}`}
           />
@@ -372,7 +383,7 @@ function TelemetryPill({ onInspect }: { onInspect: (id: string) => void }) {
             size={14}
             className={`shrink-0 text-faint transition-transform ${expanded ? "" : "rotate-180"}`}
           />
-        </div>
+        </button>
 
         {/* expanded stats */}
         <AnimatePresence initial={false}>
@@ -390,18 +401,15 @@ function TelemetryPill({ onInspect }: { onInspect: (id: string) => void }) {
                 <Stat label="FROM ZENITH" value={`${focus.degreesFromZenith.toFixed(0)}°`} />
               </div>
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onInspect(focus.id);
-                }}
-                className="flex w-full items-center justify-center gap-1 bg-panel/60 py-2 font-mono text-[10px] font-bold uppercase tracking-widest text-zenith-cyan active:bg-panel-raised"
+                onClick={() => onInspect(focus.id)}
+                className="focus-ring flex w-full items-center justify-center gap-1 bg-panel/60 py-2 font-mono text-[10px] font-bold uppercase tracking-widest text-zenith-cyan active:bg-panel-raised"
               >
                 Inspect <ArrowUpRight size={12} />
               </button>
             </motion.div>
           )}
         </AnimatePresence>
-      </motion.button>
+      </motion.div>
     </div>
   );
 }

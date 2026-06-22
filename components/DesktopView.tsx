@@ -24,6 +24,8 @@ import RegaliaTab from "@/components/RegaliaTab";
 import TimeMachine from "@/components/TimeMachine";
 import LockChip from "@/components/LockChip";
 import GlobeFallback from "@/components/GlobeFallback";
+import AuroraLayer from "@/components/AuroraLayer";
+import { useSpaceWeather } from "@/hooks/useSpaceWeather";
 import type { SkyViewProps } from "@/components/skyView";
 
 const CesiumGlobe = dynamic(() => import("@/components/CesiumGlobe"), {
@@ -65,8 +67,11 @@ export default function DesktopView(props: SkyViewProps) {
     setTimeMachineOpen,
   } = props;
 
+  // Reserve space at the top for the geomagnetic-storm banner when it's showing.
+  const { severe } = useSpaceWeather();
+
   return (
-    <div className="flex h-dvh flex-col">
+    <div className={`flex h-dvh flex-col${severe ? " pt-9" : ""}`}>
       {/* ================= header / status bar ================= */}
       <motion.header
         {...enter(0.05)}
@@ -206,6 +211,9 @@ export default function DesktopView(props: SkyViewProps) {
             onSelectLocation={selectLocation}
             onInspectObject={inspectObject}
           />
+
+          {/* Procedural auroral-oval rings, scaled by live Kp index. */}
+          <AuroraLayer />
 
           <RegaliaTab active={mode === "regalia"} observer={observer} />
 

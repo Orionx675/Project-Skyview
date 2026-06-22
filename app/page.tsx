@@ -16,7 +16,10 @@ import IntroOverlay from "@/components/IntroOverlay";
 import DesktopView from "@/components/DesktopView";
 import MobileView from "@/components/MobileView";
 import GlobeFallback from "@/components/GlobeFallback";
+import SpaceWeatherBanner from "@/components/SpaceWeatherBanner";
+import IssStreamWidget from "@/components/IssStreamWidget";
 import { TrackerProvider } from "@/hooks/useTracker";
+import { SpaceWeatherProvider } from "@/hooks/useSpaceWeather";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { DATA_LAYERS, type Observer } from "@/lib/layers";
 import type { AppMode, SkyViewProps } from "@/components/skyView";
@@ -183,21 +186,29 @@ export default function DashboardPage() {
   );
 
   return (
-    <TrackerProvider observer={observer} enabledLayerIds={enabledLayerIds}>
-      {/* Boot sequence — the active view mounts underneath it. */}
-      <AnimatePresence>
-        {!introDone && <IntroOverlay key="intro" onComplete={finishIntro} />}
-      </AnimatePresence>
+    <SpaceWeatherProvider>
+      <TrackerProvider observer={observer} enabledLayerIds={enabledLayerIds}>
+        {/* Critical geomagnetic-storm alert — spans every tab, above the views. */}
+        <SpaceWeatherBanner />
 
-      {switching ? (
-        <div className="fixed inset-0 bg-void">
-          <GlobeFallback />
-        </div>
-      ) : activeIsMobile ? (
-        <MobileView {...viewProps} />
-      ) : (
-        <DesktopView {...viewProps} />
-      )}
-    </TrackerProvider>
+        {/* Boot sequence — the active view mounts underneath it. */}
+        <AnimatePresence>
+          {!introDone && <IntroOverlay key="intro" onComplete={finishIntro} />}
+        </AnimatePresence>
+
+        {switching ? (
+          <div className="fixed inset-0 bg-void">
+            <GlobeFallback />
+          </div>
+        ) : activeIsMobile ? (
+          <MobileView {...viewProps} />
+        ) : (
+          <DesktopView {...viewProps} />
+        )}
+
+        {/* "Eyes of the Orbit" live PiP — activates when the ISS is the tracked target. */}
+        <IssStreamWidget objectId={lockedObjectId} />
+      </TrackerProvider>
+    </SpaceWeatherProvider>
   );
 }
