@@ -9,6 +9,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { Clock, Telescope, Info, Frame } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
@@ -20,7 +21,6 @@ import SearchBar from "@/components/SearchBar";
 import FOVPlanner from "@/components/FOVPlanner";
 import ClearSkyPlanner from "@/components/ClearSkyPlanner";
 import LocationCallout from "@/components/LocationCallout";
-import AboutPanel from "@/components/AboutPanel";
 import TimeMachine from "@/components/TimeMachine";
 import LockChip from "@/components/LockChip";
 import GlobeFallback from "@/components/GlobeFallback";
@@ -52,7 +52,6 @@ export default function DesktopView(props: SkyViewProps) {
     timeMachineOpen,
     mode,
     pickedLocation,
-    setMode,
     toggleLayer,
     selectLocation,
     setCoordinates,
@@ -92,34 +91,15 @@ export default function DesktopView(props: SkyViewProps) {
           </span>
         )}
 
-        {/* Mode tabs: Tracker ⇄ About — the active pill glides between them */}
-        <div className="flex shrink-0 items-center rounded-full border border-grid bg-void/50 p-0.5">
-          {(["tracker", "about"] as const).map((m) => {
-            const activeM = mode === m;
-            return (
-              <button
-                key={m}
-                onClick={() => setMode(m)}
-                aria-pressed={activeM}
-                className={`focus-ring relative z-0 flex items-center gap-1 rounded-full px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-widest transition-colors ${
-                  activeM
-                    ? m === "about" ? "text-aurora" : "text-zenith-cyan"
-                    : "text-stardust hover:text-starlight"
-                }`}
-              >
-                {activeM && (
-                  <motion.span
-                    layoutId="mode-tab-pill"
-                    transition={{ type: "spring", stiffness: 420, damping: 34 }}
-                    className={`absolute inset-0 -z-10 rounded-full ${m === "about" ? "bg-aurora/20" : "bg-zenith-cyan/20"}`}
-                  />
-                )}
-                {m === "about" && <Info size={11} />}
-                {m === "about" ? "About" : "Tracker"}
-              </button>
-            );
-          })}
-        </div>
+        {/* About → the cinematic landing page at /about */}
+        <Link
+          href="/about"
+          className="focus-ring flex shrink-0 items-center gap-1.5 rounded-full border border-grid px-3 py-1.5
+                     font-mono text-[10px] font-bold uppercase tracking-widest text-stardust transition-colors
+                     hover:border-aurora/50 hover:bg-aurora/10 hover:text-aurora"
+        >
+          <Info size={12} /> About
+        </Link>
 
         {mode === "tracker" && (
           <>
@@ -169,14 +149,6 @@ export default function DesktopView(props: SkyViewProps) {
           </>
         )}
 
-        {mode === "about" && (
-          <div className="ml-auto flex items-center gap-3">
-            <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-aurora/70">
-              Feature Guide
-            </span>
-            <NightVisionToggle className="h-8 w-8 rounded-full" />
-          </div>
-        )}
       </motion.header>
 
       {/* ================= main: sidebar + globe ================= */}
@@ -213,9 +185,6 @@ export default function DesktopView(props: SkyViewProps) {
 
           {/* Procedural auroral-oval rings, scaled by live Kp index. */}
           <AuroraLayer />
-
-          {/* About / feature guide overlay (globe keeps turning behind it). */}
-          <AboutPanel active={mode === "about"} onClose={() => setMode("tracker")} />
 
           {/* HUD dressing: edge vignette + corner brackets */}
           <div className="globe-vignette pointer-events-none absolute inset-0 z-[5]" />

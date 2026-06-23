@@ -2,7 +2,7 @@
 // components/MobileView.tsx — mobile-first UI (< 768px)
 // =============================================================================
 // A completely separate, touch-optimized shell that reuses the SAME engine and
-// feature components as desktop (CesiumGlobe, AboutPanel, ObjectModal, the
+// feature components as desktop (CesiumGlobe, ObjectModal, the
 // planners, TimeMachine). The whole screen is the globe; controls live in a
 // bottom sheet, navigation in a sticky bottom bar, and telemetry in an
 // expandable pill — so persistent chrome is minimal. Includes a DeviceOrientation
@@ -13,6 +13,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Menu,
@@ -33,7 +34,6 @@ import GlobeFallback from "@/components/GlobeFallback";
 import NightVisionToggle from "@/components/NightVisionToggle";
 import AuroraLayer from "@/components/AuroraLayer";
 import LockChip from "@/components/LockChip";
-import AboutPanel from "@/components/AboutPanel";
 import ObjectModal from "@/components/ObjectModal";
 import FOVPlanner from "@/components/FOVPlanner";
 import ClearSkyPlanner from "@/components/ClearSkyPlanner";
@@ -81,6 +81,7 @@ export default function MobileView(props: SkyViewProps) {
     setTimeMachineOpen,
   } = props;
 
+  const router = useRouter();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [magicOn, setMagicOn] = useState(false);
 
@@ -135,9 +136,6 @@ export default function MobileView(props: SkyViewProps) {
 
       {/* Procedural auroral-oval rings, scaled by live Kp index. */}
       <AuroraLayer />
-
-      {/* About / feature guide overlay (globe keeps turning behind it). */}
-      <AboutPanel active={mode === "about"} onClose={() => setMode("tracker")} />
 
       {/* ===================== condensed header ===================== */}
       <header
@@ -279,9 +277,9 @@ export default function MobileView(props: SkyViewProps) {
         />
         <NavTab
           label="About"
-          active={mode === "about"}
+          active={false}
           accent="#a78bfa"
-          onClick={() => setMode("about")}
+          onClick={() => router.push("/about")}
           Icon={Info}
         />
         <NavTab
