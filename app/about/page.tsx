@@ -598,9 +598,9 @@ function DataLayersSection() {
             })}
           </motion.div>
 
-          <HoloCard className="grid h-40 w-40 place-items-center rounded-full text-center">
-            <div>
-              <Layers size={30} className="mx-auto text-zenith-cyan" />
+          <HoloCard className="h-40 w-40 rounded-full">
+            <div className="flex h-full w-full flex-col items-center justify-center text-center">
+              <Layers size={30} className="text-zenith-cyan" />
               <p className="mt-2 font-mono text-[10px] uppercase tracking-widest text-stardust">
                 {DATA_LAYERS.length} live layers
               </p>
