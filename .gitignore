@@ -2,14 +2,15 @@ node_modules/
 .next/
 out/
 build/
-# Cesium assets copied in by the `copy-cesium` script (regenerated each build)
-public/cesium/
 *.tsbuildinfo
 next-env.d.ts
 .env*.local
 .DS_Store
 
-# Third-party agent skills installed via `npx skills add` (vendored locally, not part of the app)
+# Local Cesium artifacts — Cesium is loaded from a CDN at runtime, not bundled
+public/cesium/
+
+# Local tooling and vendored agent skills (not part of the app)
+.claude/
 .agents/
-.claude/skills/
 skills-lock.json
